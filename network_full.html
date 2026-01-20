@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Economy Full Network - USEEIO v2.0.1</title>
+    <title>Industry Network</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -52,36 +52,120 @@
             pointer-events: auto;
         }
 
-        .header {
-            top: 16px;
-            left: 16px;
-            padding: 16px 20px;
-        }
-
-        .header h1 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #58a6ff, #a371f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 4px;
-        }
-
-        .header p {
-            font-size: 0.75rem;
-            color: #8b949e;
-        }
-
-        .controls {
+        .settings-toggle {
+            position: absolute;
             top: 16px;
             right: 16px;
-            padding: 16px;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #c9d1d9;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .settings-toggle:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        .settings-toggle .icon {
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .settings-toggle.open .icon {
+            transform: rotate(90deg);
+        }
+
+        .settings-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
             width: 280px;
+            max-height: calc(100vh - 32px);
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+        }
+
+        .settings-panel.open {
+            display: flex;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            flex-shrink: 0;
+        }
+
+        .settings-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .settings-close:hover {
+            color: #f0f6fc;
+        }
+
+        .settings-content {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .settings-section {
+            margin-bottom: 20px;
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #21262d;
         }
 
         .control-group {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .control-group:last-child {
@@ -157,44 +241,38 @@
             border-color: #238636;
         }
 
-        .stats {
-            bottom: 16px;
-            left: 16px;
-            padding: 12px 16px;
-            font-size: 0.75rem;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 24px;
-            margin-bottom: 4px;
-        }
-
-        .stat-row:last-child {
+        .stats-inline {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
             margin-bottom: 0;
         }
 
-        .stat-value {
+        .stat-item {
+            text-align: center;
+            padding: 8px 4px;
+            background: #21262d;
+            border-radius: 6px;
+        }
+
+        .stat-item .stat-value {
             font-family: 'JetBrains Mono', monospace;
             color: #a371f7;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: block;
         }
 
-        .legend {
-            bottom: 16px;
-            right: 16px;
-            padding: 12px 16px;
-            max-height: 300px;
-            overflow-y: auto;
-            width: 200px;
-        }
-
-        .legend h3 {
-            font-size: 0.7rem;
+        .stat-item .stat-label {
+            font-size: 0.6rem;
             color: #8b949e;
-            margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .legend-inline {
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .legend-item {
@@ -333,77 +411,164 @@
         <canvas id="canvas"></canvas>
         <svg id="overlay"></svg>
         
-        <div class="panel header">
-            <h1>US Economy Network</h1>
-            <p>USEEIO v2.0.1 • 411 Industries • Direct Requirements</p>
+        <!-- Settings Toggle Button -->
+        <button class="settings-toggle" id="settings-toggle">
+            <span class="icon">⚙</span>
+            <span>Settings</span>
+        </button>
+
+        <!-- Unified Settings Panel -->
+        <div class="settings-panel" id="settings-panel">
+            <div class="settings-header">
+                <span class="settings-title">Settings</span>
+                <button class="settings-close" id="settings-close">×</button>
+            </div>
+            <div class="settings-content">
+                <!-- Stats Section -->
+                <div class="settings-section">
+                    <div class="section-label">Statistics</div>
+                    <div class="stats-inline">
+                        <div class="stat-item">
+                            <span class="stat-value" id="visible-nodes">411</span>
+                            <span class="stat-label">Industries</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="visible-links">0</span>
+                            <span class="stat-label">Links</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">$29T</span>
+                            <span class="stat-label">Output</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Type Section -->
+                <div class="settings-section">
+                    <div class="section-label">Flow Type</div>
+                    <div class="control-group">
+                        <select id="flow-type" class="search-box" style="cursor:pointer;">
+                            <option value="dollars">Dollar Flows</option>
+                            <option value="MSW">MSW (Municipal Solid Waste)</option>
+                            <option value="CDD">CDD (Construction Debris)</option>
+                            <option value="Hazardous">Hazardous Waste</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Search Section -->
+                <div class="settings-section">
+                    <div class="section-label">Search</div>
+                    <div class="control-group">
+                        <input type="text" class="search-box" id="search" placeholder="Search industries...">
+                    </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="settings-section">
+                    <div class="section-label">Display</div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Min Flow</span>
+                            <span class="control-value" id="threshold-value">$5B</span>
+                        </div>
+                        <input type="range" id="threshold" min="0" max="100" step="1" value="5">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Node Size</span>
+                            <span class="control-value" id="size-value">1.0x</span>
+                        </div>
+                        <input type="range" id="node-size" min="0.3" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Link Opacity</span>
+                            <span class="control-value" id="opacity-value">30%</span>
+                        </div>
+                        <input type="range" id="link-opacity" min="5" max="80" step="5" value="30">
+                    </div>
+                    <div class="control-group">
+                        <div class="btn-row">
+                            <button class="btn" id="toggle-labels">Labels</button>
+                            <button class="btn active" id="toggle-physics">Physics</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="btn-row">
+                            <button class="btn" id="reset-btn">Reset</button>
+                            <button class="btn" id="center-btn">Center</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend Section -->
+                <div class="settings-section">
+                    <div class="section-label">Sectors</div>
+                    <div class="legend-inline" id="legend"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="panel controls">
-            <div class="control-group">
-                <input type="text" class="search-box" id="search" placeholder="Search industries...">
-            </div>
-            <div class="control-group">
-                <div class="control-label">
-                    <span>Connection Threshold</span>
-                    <span class="control-value" id="threshold-value">1%</span>
-                </div>
-                <input type="range" id="threshold" min="0.5" max="15" step="0.5" value="1">
-            </div>
-            <div class="control-group">
-                <div class="control-label">
-                    <span>Node Size</span>
-                    <span class="control-value" id="size-value">1.0x</span>
-                </div>
-                <input type="range" id="node-size" min="0.3" max="2" step="0.1" value="1">
-            </div>
-            <div class="control-group">
-                <div class="control-label">
-                    <span>Link Opacity</span>
-                    <span class="control-value" id="opacity-value">30%</span>
-                </div>
-                <input type="range" id="link-opacity" min="5" max="80" step="5" value="30">
-            </div>
-            <div class="control-group">
-                <div class="btn-row">
-                    <button class="btn" id="reset-btn">Reset View</button>
-                    <button class="btn" id="toggle-labels">Labels</button>
-                </div>
-            </div>
-            <div class="control-group">
-                <div class="btn-row">
-                    <button class="btn active" id="toggle-physics">Physics</button>
-                    <button class="btn" id="center-btn">Center</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel stats">
-            <div class="stat-row">
-                <span>Visible Industries</span>
-                <span class="stat-value" id="visible-nodes">411</span>
-            </div>
-            <div class="stat-row">
-                <span>Visible Connections</span>
-                <span class="stat-value" id="visible-links">4,268</span>
-            </div>
-            <div class="stat-row">
-                <span>Total Output</span>
-                <span class="stat-value">$29.2T</span>
-            </div>
-        </div>
-
-        <div class="panel legend" id="legend"></div>
         <div class="tooltip" id="tooltip"></div>
     </div>
 
     <script>
-        // Full graph data embedded
-        const fullGraphData = {"nodes":[{"id":"1111A0/US","name":"Fresh soybeans, canola, flaxseeds, and other oilseeds","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":38.41},{"id":"1111B0/US","name":"Fresh wheat, corn, rice, and other grains","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":65.87},{"id":"111200/US","name":"Fresh vegetables, melons, and potatoes","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":24.7},{"id":"111300/US","name":"Fresh fruits and tree nuts","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":36.91},{"id":"111400/US","name":"Greenhouse crops, mushrooms, nurseries, and flowers","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":22.07},{"id":"111900/US","name":"Tobacco, cotton, sugarcane, peanuts, sugar beets, herbs and spices, and other crops","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":37.0},{"id":"112120/US","name":"Dairies","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":39.17},{"id":"1121A0/US","name":"Cattle ranches and feedlots","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":70.86},{"id":"112300/US","name":"Poultry farms","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":41.35},{"id":"112A00/US","name":"Animal farms and aquaculture ponds (except cattle and poultry)","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":17.62},{"id":"113000/US","name":"Timber and raw forest products","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":32.32},{"id":"114000/US","name":"Wild-caught fish and game","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":8.52},{"id":"115000/US","name":"Agriculture and forestry support","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":27.82},{"id":"211000/US","name":"Unrefined oil and gas","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":362.66},{"id":"212100/US","name":"Coal","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":41.83},{"id":"212230/US","name":"Copper, nickel, lead, and zinc","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":10.13},{"id":"2122A0/US","name":"Iron, gold, silver, and other metal ores","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":21.7},{"id":"212310/US","name":"Dimensional stone","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":2.63},{"id":"2123A0/US","name":"Sand, gravel, clay, phosphate, other nonmetallic minerals","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":27.2},{"id":"213111/US","name":"Well drilling","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":30.58},{"id":"21311A/US","name":"Other support activities for mining","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":116.29},{"id":"221100/US","name":"Electricity","sector":"Utilities","sectorCode":"22","color":"#f1c40f","output":366.95},{"id":"221200/US","name":"Natural gas","sector":"Utilities","sectorCode":"22","color":"#f1c40f","output":58.5},{"id":"221300/US","name":"Water and sewer systems","sector":"Utilities","sectorCode":"22","color":"#f1c40f","output":36.05},{"id":"233210/US","name":"Healthcare and educational structures","sector":"Construction","sectorCode":"23","color":"#e67e22","output":55.2},{"id":"233262/US","name":"Commercial structures (except farm)","sector":"Construction","sectorCode":"23","color":"#e67e22","output":104.1},{"id":"2332A0/US","name":"Office, industrial, and other structures","sector":"Construction","sectorCode":"23","color":"#e67e22","output":85.08},{"id":"2332D0/US","name":"Other nonresidential maintenance and repair","sector":"Construction","sectorCode":"23","color":"#e67e22","output":54.22},{"id":"233411/US","name":"Single-family residential structures","sector":"Construction","sectorCode":"23","color":"#e67e22","output":232.47},{"id":"233412/US","name":"Multifamily residential structures","sector":"Construction","sectorCode":"23","color":"#e67e22","output":38.34},{"id":"2334A0/US","name":"Residential maintenance and repair","sector":"Construction","sectorCode":"23","color":"#e67e22","output":148.6},{"id":"230301/US","name":"Nonresidential maintenance and repair","sector":"Construction","sectorCode":"23","color":"#e67e22","output":114.75},{"id":"230302/US","name":"Highways and streets","sector":"Construction","sectorCode":"23","color":"#e67e22","output":90.55},{"id":"2303A0/US","name":"Other nonbuilding structures and maintenance and repair","sector":"Construction","sectorCode":"23","color":"#e67e22","output":106.17},{"id":"233230/US","name":"Manufacturing structures","sector":"Construction","sectorCode":"23","color":"#e67e22","output":30.45},{"id":"233240/US","name":"Telecommunications, electric, and power structures","sector":"Construction","sectorCode":"23","color":"#e67e22","output":14.09},{"id":"321100/US","name":"Lumber and treated lumber","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.25},{"id":"321200/US","name":"Plywood, veneers, and engineered wood products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":29.56},{"id":"321910/US","name":"Wooden windows, door, and flooring","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.06},{"id":"321920/US","name":"Wooden containers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.49},{"id":"3219A0/US","name":"Manufactured wood products (except containers)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":22.22},{"id":"327100/US","name":"Clay products and refractories","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.42},{"id":"327200/US","name":"Glass products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.7},{"id":"327310/US","name":"Cement","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.84},{"id":"327320/US","name":"Concrete","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":39.38},{"id":"327330/US","name":"Concrete pipe, brick, and block","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.95},{"id":"327390/US","name":"Other concrete products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.74},{"id":"327400/US","name":"Lime and gypsum products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.87},{"id":"327900/US","name":"Other nonmetallic mineral products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":22.95},{"id":"331110/US","name":"Primary iron, steel, and ferroalloy products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":64.69},{"id":"3312A0/US","name":"Secondary steel products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":27.18},{"id":"331313/US","name":"Primary aluminum products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.81},{"id":"33131B/US","name":"Secondary aluminum products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.57},{"id":"331410/US","name":"Secondary copper products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.99},{"id":"331490/US","name":"Other secondary nonferrous metal products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.66},{"id":"331510/US","name":"Ferrous metal foundry products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.52},{"id":"331520/US","name":"Nonferrous metal foundry products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.78},{"id":"332114/US","name":"Custom metal rolls","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.06},{"id":"33211A/US","name":"All other forging, stamping, and sintering","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.03},{"id":"332200/US","name":"Cutlery and handtools","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.33},{"id":"332310/US","name":"Metal structures","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":34.59},{"id":"332320/US","name":"Metal ornaments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":5.84},{"id":"3323A0/US","name":"Metal windows, doors, and architectural products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.25},{"id":"332410/US","name":"Power boilers, heat exchangers, and metal tanks","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.32},{"id":"332420/US","name":"Metal enclosures and containers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":4.37},{"id":"332430/US","name":"Metal cans, boxes, and miscellaneous products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":31.08},{"id":"3324A0/US","name":"Arms, ammunition, ordnance, and accessories","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.38},{"id":"332500/US","name":"Hardware","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.06},{"id":"332600/US","name":"Spring and wire products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.93},{"id":"332710/US","name":"Machine shop products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.75},{"id":"332800/US","name":"Metal coatings, engravings, and heat treatments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.77},{"id":"332910/US","name":"Metal valves","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.54},{"id":"33299A/US","name":"Springs and other hardware","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":28.22},{"id":"33299B/US","name":"Misc fabricated metal products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":22.16},{"id":"333111/US","name":"Farm machinery and equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.46},{"id":"333112/US","name":"Lawn and garden equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.97},{"id":"333120/US","name":"Construction equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":32.05},{"id":"333130/US","name":"Mining and oil and gas field machinery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.35},{"id":"333200/US","name":"Plastics and rubber machinery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":4.42},{"id":"333314/US","name":"Optical instruments and lens","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":6.64},{"id":"33331A/US","name":"Printers, printing equipment, photocopiers, and projectors","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.08},{"id":"333415/US","name":"Air conditioners, fans, blowers, and purification equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":37.03},{"id":"33341A/US","name":"Heating and commercial refrigeration equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.68},{"id":"333510/US","name":"Metalworking machinery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.15},{"id":"333611/US","name":"Turbines, generators, and power transmission equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":22.63},{"id":"333612/US","name":"Speed changers and mechanical drives","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":3.9},{"id":"333613/US","name":"Power transmission, industrial drives, and gears","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.98},{"id":"333618/US","name":"Other engine equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.12},{"id":"33391A/US","name":"Pumps and compressors","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.47},{"id":"33391B/US","name":"Material handling equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.13},{"id":"333920/US","name":"Conveyors and conveying equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.98},{"id":"333991/US","name":"Power tools, and welding equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.34},{"id":"33399A/US","name":"Packaging machinery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":6.97},{"id":"33399B/US","name":"Industrial process machinery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":19.02},{"id":"334111/US","name":"Computers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":27.55},{"id":"334112/US","name":"Computer storage devices","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":12.12},{"id":"334118/US","name":"Terminals, computer peripherals, and parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":28.44},{"id":"334210/US","name":"Telephone apparatus","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":20.82},{"id":"334220/US","name":"Radio and TV broadcasting, and wireless communications equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":27.47},{"id":"334290/US","name":"Other communications equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.0},{"id":"334300/US","name":"Audio and video equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.87},{"id":"334413/US","name":"Semiconductors","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":48.97},{"id":"334418/US","name":"Electronic connectors and misc electronic components","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":20.41},{"id":"33441A/US","name":"Printed circuit boards and electronic components","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":34.85},{"id":"334510/US","name":"Electromedical apparatus","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":34.46},{"id":"33451A/US","name":"Geophysical equipment, clocks, and other instruments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":26.12},{"id":"33451B/US","name":"Lab apparatus, process control, and other measuring instruments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":52.61},{"id":"334610/US","name":"Magnetic and optical media","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":4.07},{"id":"335110/US","name":"Light bulbs and tubes","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.25},{"id":"335120/US","name":"Lighting fixtures","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.47},{"id":"335210/US","name":"Small appliances","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":6.83},{"id":"335220/US","name":"Large appliances","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":22.28},{"id":"335311/US","name":"Electric power and specialty transformers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.22},{"id":"335312/US","name":"Motors and generators","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.97},{"id":"335313/US","name":"Switchgear and switchboard apparatus","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.85},{"id":"335314/US","name":"Relays, industrial controls, and motor starters","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.32},{"id":"3359A0/US","name":"Battery, wiring, and other electrical equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":36.63},{"id":"336111/US","name":"Automobiles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":88.33},{"id":"336112/US","name":"Light trucks and utility vehicles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":105.33},{"id":"336120/US","name":"Heavy duty trucks","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":30.35},{"id":"336211/US","name":"Vehicle bodies","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.37},{"id":"336214/US","name":"Trailers and campers (motor homes)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.1},{"id":"336310/US","name":"Motor vehicle gasoline engines and parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":31.76},{"id":"336320/US","name":"Motor vehicle electrical and electronic equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.9},{"id":"336330/US","name":"Vehicle steering and suspension components","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.67},{"id":"336340/US","name":"Vehicle brakes","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.81},{"id":"336350/US","name":"Vehicle power transmission equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.6},{"id":"336360/US","name":"Vehicle interior components","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.36},{"id":"336370/US","name":"Vehicle metal stamping","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.75},{"id":"336390/US","name":"Other motor vehicle parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":62.89},{"id":"3363A0/US","name":"Vehicle seating and interior trim (upholstered)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.66},{"id":"336411/US","name":"Aircraft","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":79.5},{"id":"336412/US","name":"Aircraft engines and parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":51.1},{"id":"3364A0/US","name":"Other aircraft parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.25},{"id":"336500/US","name":"Trains, boats, cycles, and other vehicles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":33.13},{"id":"336611/US","name":"Ships and boats","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.07},{"id":"336991/US","name":"Motorcycles, bicycles, and parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":5.89},{"id":"336992/US","name":"Military vehicles and parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.35},{"id":"337000/US","name":"Furniture, related products, and blinds","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":82.64},{"id":"339112/US","name":"Surgical instruments, supplies, and laboratory products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":53.8},{"id":"339113/US","name":"Dental equipment and supplies","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":5.91},{"id":"339114/US","name":"Ophthalmic goods","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.85},{"id":"339115/US","name":"Medical and diagnostic testing equipment and supplies","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":11.46},{"id":"339910/US","name":"Jewelry and silverware","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":11.88},{"id":"33991A/US","name":"Sporting and athletic goods (except dolls, toys, and games)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.74},{"id":"339920/US","name":"Musical instruments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":2.29},{"id":"339930/US","name":"Dolls, toys, and games","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.78},{"id":"339940/US","name":"Office supplies and pens and pencils","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.36},{"id":"339950/US","name":"Signs","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":11.83},{"id":"3399A0/US","name":"Office supplies and miscellaneous manufactured goods","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.8},{"id":"311110/US","name":"Dog and cat food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":20.94},{"id":"311119/US","name":"Other animal food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":42.19},{"id":"311210/US","name":"Flours and malts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.22},{"id":"311221/US","name":"Corn products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.53},{"id":"311225/US","name":"Vegetable oils and by-products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":30.27},{"id":"311230/US","name":"Breakfast cereals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.48},{"id":"311300/US","name":"Sugar and confectionery products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":29.0},{"id":"311400/US","name":"Frozen fruits, juices, and vegetables","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":31.82},{"id":"311500/US","name":"Fluid milk and butter","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":53.75},{"id":"311600/US","name":"Dry, condensed, and evaporated dairy products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":28.61},{"id":"31161A/US","name":"Packaged meat (except poultry)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":107.65},{"id":"311615/US","name":"Packaged poultry","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":51.62},{"id":"311700/US","name":"Seafood","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.69},{"id":"311800/US","name":"Bakery products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":57.64},{"id":"311910/US","name":"Snack food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":37.36},{"id":"311920/US","name":"Coffee and tea","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.88},{"id":"311930/US","name":"Flavoring syrups, seasonings, and dressings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.22},{"id":"311940/US","name":"Frozen food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.55},{"id":"3119A0/US","name":"Coffee and tea","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.88},{"id":"3119B0/US","name":"Flavoring syrups, seasonings, and dressings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.22},{"id":"312110/US","name":"Soft drinks","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":38.7},{"id":"312120/US","name":"Beer, wine, and liquor","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":56.88},{"id":"312200/US","name":"Tobacco products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.52},{"id":"313100/US","name":"Fiber, yarn, and thread","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.15},{"id":"313200/US","name":"Fabrics","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.3},{"id":"313300/US","name":"Textile finishing and fabric coating","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.33},{"id":"314110/US","name":"Carpet and rugs","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.36},{"id":"314120/US","name":"Curtains and linens","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.49},{"id":"314900/US","name":"Textile bags, canvas, tire cord, and other textiles and products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":11.88},{"id":"31499A/US","name":"Net bags, twine, rope, tire cord, and other textiles and products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.07},{"id":"315000/US","name":"Apparel","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":27.51},{"id":"316000/US","name":"Leather and allied products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.57},{"id":"322100/US","name":"Pulp and paper","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":42.38},{"id":"322210/US","name":"Cardboard","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":33.64},{"id":"32222A/US","name":"Coated and laminated paper, except packaging","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.08},{"id":"32222B/US","name":"Coated, laminated, and compressed paper packaging","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":38.6},{"id":"322230/US","name":"Stationery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.98},{"id":"322291/US","name":"Sanitary paper products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.88},{"id":"322A00/US","name":"Cardboard containers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":52.18},{"id":"323100/US","name":"Printed media","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":70.76},{"id":"324110/US","name":"Asphalt pavement","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":784.61},{"id":"324121/US","name":"Asphalt materials, including shingles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.92},{"id":"324191/US","name":"Gasoline, fuels, and by-products of petroleum refining","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":70.61},{"id":"324199/US","name":"All other petroleum and coal products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":38.75},{"id":"325110/US","name":"Petrochemicals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":40.0},{"id":"325130/US","name":"Synthetic dyes and pigments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.41},{"id":"325180/US","name":"Other basic inorganic chemicals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.6},{"id":"325190/US","name":"Other basic organic chemicals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":55.81},{"id":"325211/US","name":"Plastics","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":86.17},{"id":"325212/US","name":"Synthetic rubber and artificial and synthetic fibers and filaments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.56},{"id":"325310/US","name":"Fertilizers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":26.76},{"id":"325320/US","name":"Pesticides","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.72},{"id":"325400/US","name":"Pharmaceuticals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":168.81},{"id":"325500/US","name":"Paints and coatings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.15},{"id":"325600/US","name":"Soaps, cleaning compounds, and toilet preparations","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":68.35},{"id":"325900/US","name":"Other chemical products and preparations","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":29.73},{"id":"325920/US","name":"Compressed gases","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.03},{"id":"326110/US","name":"Plastic bags, films, and sheets","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":29.02},{"id":"326120/US","name":"Plastic pipe, fittings, and sausage casings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.53},{"id":"326130/US","name":"Laminated plastic plates, sheets, and shapes","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.61},{"id":"326140/US","name":"Polystyrene foam products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.29},{"id":"326150/US","name":"Urethane foam products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.12},{"id":"326160/US","name":"Plastic bottles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.55},{"id":"326190/US","name":"Other plastic products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":47.43},{"id":"326200/US","name":"Rubber products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":33.43},{"id":"42A000/US","name":"Motor vehicle and parts merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":242.67},{"id":"423400/US","name":"Computer, storage, and office equipment wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":88.29},{"id":"423600/US","name":"Electrical and electronic goods merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":152.85},{"id":"423800/US","name":"Machinery, equipment, and supplies merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":181.58},{"id":"423A00/US","name":"Other durable goods merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":163.64},{"id":"424200/US","name":"Drugs and druggists sundries merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":260.0},{"id":"424400/US","name":"Grocery and related product merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":203.49},{"id":"424700/US","name":"Petroleum and petroleum products merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":61.68},{"id":"424A00/US","name":"Other nondurable goods merchant wholesalers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":193.17},{"id":"424B00/US","name":"Wholesale electronic markets and agents and brokers","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":290.98},{"id":"4200ID/US","name":"Custom computer programming services","sector":"Wholesale Trade","sectorCode":"42","color":"#9b59b6","output":1.22},{"id":"441000/US","name":"Motor vehicles, parts, and supplies stores","sector":"Retail Trade","sectorCode":"44-45","color":"#e91e63","output":236.38},{"id":"445000/US","name":"Food and beverage stores","sector":"Retail Trade","sectorCode":"44-45","color":"#e91e63","output":201.73},{"id":"452000/US","name":"General merchandise stores","sector":"Retail Trade","sectorCode":"44-45","color":"#e91e63","output":197.67},{"id":"4A0000/US","name":"Miscellaneous retail stores","sector":"Retail Trade","sectorCode":"44-45","color":"#e91e63","output":618.58},{"id":"481000/US","name":"Air transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":179.61},{"id":"482000/US","name":"Rail transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":71.32},{"id":"483000/US","name":"Water transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":50.41},{"id":"484000/US","name":"Truck transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":297.77},{"id":"485000/US","name":"Passenger ground transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":62.51},{"id":"486000/US","name":"Pipeline transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":49.78},{"id":"487OS0/US","name":"Sightseeing and supporting transport activities","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":170.72},{"id":"492000/US","name":"Couriers and messengers","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":87.86},{"id":"493000/US","name":"Warehousing and storage","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":51.96},{"id":"4931A0/US","name":"Storage and transportation support activities","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":223.19},{"id":"511110/US","name":"Newspaper publishers","sector":"Information","sectorCode":"51","color":"#673ab7","output":25.46},{"id":"511120/US","name":"Periodical publishers","sector":"Information","sectorCode":"51","color":"#673ab7","output":31.53},{"id":"511130/US","name":"Book publishers","sector":"Information","sectorCode":"51","color":"#673ab7","output":25.38},{"id":"5111A0/US","name":"Directory, database, and other publishers","sector":"Information","sectorCode":"51","color":"#673ab7","output":20.44},{"id":"512100/US","name":"Motion pictures and videos","sector":"Information","sectorCode":"51","color":"#673ab7","output":97.1},{"id":"512200/US","name":"Sound recordings","sector":"Information","sectorCode":"51","color":"#673ab7","output":11.97},{"id":"515100/US","name":"Radio and TV broadcasting","sector":"Information","sectorCode":"51","color":"#673ab7","output":61.96},{"id":"515200/US","name":"Cable and other subscription programming","sector":"Information","sectorCode":"51","color":"#673ab7","output":80.65},{"id":"517110/US","name":"Wireless telecommunications","sector":"Information","sectorCode":"51","color":"#673ab7","output":310.72},{"id":"517A00/US","name":"Satellite, telecommunications resellers, and other telecommunications","sector":"Information","sectorCode":"51","color":"#673ab7","output":86.16},{"id":"518000/US","name":"Data processing, hosting, and related services","sector":"Information","sectorCode":"51","color":"#673ab7","output":151.43},{"id":"519130/US","name":"Internet publishing, broadcasting, and web search portals","sector":"Information","sectorCode":"51","color":"#673ab7","output":88.79},{"id":"5191A0/US","name":"All other information services","sector":"Information","sectorCode":"51","color":"#673ab7","output":114.66},{"id":"51A000/US","name":"Software publishers","sector":"Information","sectorCode":"51","color":"#673ab7","output":288.07},{"id":"521CI0/US","name":"Central banking and credit intermediation","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":188.19},{"id":"522A00/US","name":"Monetary authorities and depository credit intermediation","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":300.21},{"id":"523000/US","name":"Securities and commodities brokerage and related services","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":214.65},{"id":"524100/US","name":"Insurance carriers, except direct life","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":203.55},{"id":"5241XX/US","name":"Insurance agencies and brokerages","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":428.14},{"id":"525000/US","name":"Funds, trusts, and financial vehicles","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":67.55},{"id":"52A000/US","name":"Investment advice, portfolio management, and other financial advising services","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":448.25},{"id":"52B000/US","name":"Other financial activities","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":180.08},{"id":"531HSO/US","name":"Tenant-occupied housing","sector":"Real Estate","sectorCode":"53","color":"#795548","output":1276.34},{"id":"531HST/US","name":"Other real estate","sector":"Real Estate","sectorCode":"53","color":"#795548","output":431.91},{"id":"531ORE/US","name":"Vehicle rental and leasing","sector":"Real Estate","sectorCode":"53","color":"#795548","output":889.33},{"id":"532100/US","name":"Automotive equipment rental and leasing","sector":"Real Estate","sectorCode":"53","color":"#795548","output":86.66},{"id":"532400/US","name":"Commercial and industrial equipment rental","sector":"Real Estate","sectorCode":"53","color":"#795548","output":67.77},{"id":"532A00/US","name":"Consumer goods and general rental centers","sector":"Real Estate","sectorCode":"53","color":"#795548","output":37.04},{"id":"533000/US","name":"Lessors of nonfinancial intangible assets","sector":"Real Estate","sectorCode":"53","color":"#795548","output":68.47},{"id":"541100/US","name":"Custom computer programming","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":306.98},{"id":"541200/US","name":"Accounting, tax, and payroll services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":167.52},{"id":"541300/US","name":"Architectural and engineering services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":262.77},{"id":"541400/US","name":"Specialized design services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":31.47},{"id":"541511/US","name":"Custom computer programming services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":139.53},{"id":"541512/US","name":"Computer systems design services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":163.16},{"id":"54151A/US","name":"Other computer related services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":85.01},{"id":"541610/US","name":"Management consulting services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":232.01},{"id":"5416A0/US","name":"Environmental, scientific, and technical consulting services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":64.0},{"id":"541700/US","name":"Scientific R&D services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":149.73},{"id":"541800/US","name":"Advertising, PR, and related services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":112.94},{"id":"541920/US","name":"Photographic services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":11.79},{"id":"541940/US","name":"Veterinary services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":32.7},{"id":"5419A0/US","name":"All other professional, scientific, and technical services","sector":"Professional Services","sectorCode":"54","color":"#ff9800","output":126.44},{"id":"550000/US","name":"Company and enterprise management","sector":"Management","sectorCode":"55","color":"#607d8b","output":478.78},{"id":"561100/US","name":"Office administrative services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":66.54},{"id":"561200/US","name":"Facilities support services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":19.7},{"id":"561300/US","name":"Employment services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":209.45},{"id":"561400/US","name":"Business support services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":64.48},{"id":"561500/US","name":"Travel arrangement and reservation services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":54.4},{"id":"561600/US","name":"Investigation and security services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":56.46},{"id":"561700/US","name":"Landscape and building services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":165.98},{"id":"561900/US","name":"Other support services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":32.98},{"id":"562111/US","name":"Solid waste collection","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":22.87},{"id":"562212/US","name":"Solid waste landfilling","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":11.03},{"id":"562213/US","name":"Solid waste combustors and incinerators","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":2.26},{"id":"562910/US","name":"Environmental remediation services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":12.23},{"id":"562920/US","name":"Materials recovery facilities","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":7.32},{"id":"56290A/US","name":"Hazardous waste collection treatment and disposal services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":11.0},{"id":"56290B/US","name":"All other waste management services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":484.84},{"id":"611100/US","name":"Elementary and secondary schools","sector":"Education","sectorCode":"61","color":"#3f51b5","output":71.79},{"id":"611A00/US","name":"Junior colleges, and universities","sector":"Education","sectorCode":"61","color":"#3f51b5","output":153.95},{"id":"611B00/US","name":"Other educational services","sector":"Education","sectorCode":"61","color":"#3f51b5","output":28.47},{"id":"621100/US","name":"Physician and dentist offices","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":419.05},{"id":"621200/US","name":"Hospitals (except mental illness)","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":101.87},{"id":"621300/US","name":"Medical labs and diagnostic imaging centers","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":50.41},{"id":"621400/US","name":"Outpatient care centers","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":79.17},{"id":"621500/US","name":"Medical and diagnostic labs","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":49.79},{"id":"621600/US","name":"Home health care services","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":77.72},{"id":"621900/US","name":"Other ambulatory health care services","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":57.01},{"id":"622000/US","name":"Hospitals","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":708.85},{"id":"623000/US","name":"Nursing and residential care facilities","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":205.39},{"id":"623A00/US","name":"Residential mental health, substance abuse, and other facilities","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":46.38},{"id":"623B00/US","name":"Community care facilities for the elderly","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":64.15},{"id":"624100/US","name":"Individual and family services","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":68.55},{"id":"624A00/US","name":"Community food, housing, and other relief services","sector":"Healthcare","sectorCode":"62","color":"#f44336","output":49.3},{"id":"711100/US","name":"Performing arts companies","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":19.32},{"id":"711200/US","name":"Spectator sports","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":40.54},{"id":"711500/US","name":"Independent artists, writers, and performers","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":29.87},{"id":"711A00/US","name":"Promoters of events and agents for public figures","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":29.56},{"id":"712000/US","name":"Museums, historical sites, zoos, and parks","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":20.88},{"id":"713100/US","name":"Amusement parks and arcades","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":15.96},{"id":"713200/US","name":"Gambling industries","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":33.78},{"id":"713900/US","name":"Golf courses, fitness, and other recreational industries","sector":"Arts & Entertainment","sectorCode":"71","color":"#ff5722","output":44.15},{"id":"721000/US","name":"Accommodations","sector":"Accommodation & Food","sectorCode":"72","color":"#ffc107","output":181.81},{"id":"722110/US","name":"Full-service restaurants","sector":"Accommodation & Food","sectorCode":"72","color":"#ffc107","output":242.64},{"id":"722211/US","name":"Limited-service restaurants","sector":"Accommodation & Food","sectorCode":"72","color":"#ffc107","output":219.79},{"id":"722A00/US","name":"All other food and drinking places","sector":"Accommodation & Food","sectorCode":"72","color":"#ffc107","output":175.62},{"id":"811100/US","name":"Automotive repair and maintenance","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":104.12},{"id":"811200/US","name":"Electronic equipment repair and maintenance","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":26.4},{"id":"811300/US","name":"Commercial machinery repair and maintenance","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":42.17},{"id":"811400/US","name":"Household goods repair and maintenance","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":13.69},{"id":"812100/US","name":"Personal care services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":64.28},{"id":"812200/US","name":"Death care services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":19.73},{"id":"812300/US","name":"Dry-cleaning and laundry services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":9.88},{"id":"8123A0/US","name":"Coin-operated laundries and drycleaners, and garment repair services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":28.7},{"id":"812900/US","name":"Other personal services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":21.72},{"id":"813100/US","name":"Religious organizations","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":113.22},{"id":"813A00/US","name":"Grantmaking, giving, advocacy, civic, professional, and similar organizations","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":68.04},{"id":"813B00/US","name":"Religious organizations","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":113.22},{"id":"S00101/US","name":"Federal electric utilities","sector":"Other","sectorCode":"Other Activities/","color":"#bdbdbd","output":5.38},{"id":"S00201/US","name":"State and local electric utilities","sector":"Other","sectorCode":"Other Activities/","color":"#bdbdbd","output":61.74},{"id":"S00202/US","name":"State and local transit","sector":"Other","sectorCode":"Other Activities/","color":"#bdbdbd","output":48.32},{"id":"S00203/US","name":"State and local government enterprises","sector":"Other","sectorCode":"Other Activities/","color":"#bdbdbd","output":136.63},{"id":"S00300/US","name":"Federal general government (defense)","sector":"Government","sectorCode":"Other Activities/Government","color":"#1a237e","output":200.15},{"id":"S00401/US","name":"Federal government enterprises","sector":"Government","sectorCode":"Other Activities/Government","color":"#1a237e","output":168.24},{"id":"S00500/US","name":"Federal general government (nondefense)","sector":"Government","sectorCode":"Other Activities/Government","color":"#1a237e","output":676.3},{"id":"S00600/US","name":"Postal service","sector":"Government","sectorCode":"Other Activities/Government","color":"#1a237e","output":369.89},{"id":"GSLGE/US","name":"State and local government enterprises","sector":"Government","sectorCode":"Other Activities/Government","color":"#1a237e","output":890.02},{"id":"GSLGO/US","name":"State and local government","sector":"Government","sectorCode":"Other Activities/Government","color":"#1a237e","output":820.51},{"id":"Used/US","name":"Scrap, used and secondhand goods","sector":"Other","sectorCode":"Other Activities/","color":"#bdbdbd","output":0.0}]};
+        // Flow type configuration
+        const flowTypeConfig = {
+            'dollars': {
+                name: 'Dollar Flows',
+                unit: 'Billion USD',
+                unitShort: 'B',
+                prefix: '$',
+                color: '#58a6ff',
+                minThreshold: 0,
+                maxThreshold: 100,
+                step: 1,
+                defaultThreshold: 5,
+                decimals: 0
+            },
+            'MSW': {
+                name: 'MSW Waste',
+                unit: 'Million Tons',
+                unitShort: 'Mt',
+                prefix: '',
+                color: '#2ecc71',
+                minThreshold: 0,
+                maxThreshold: 2,
+                step: 0.01,
+                defaultThreshold: 0.05,
+                decimals: 2
+            },
+            'CDD': {
+                name: 'CDD Waste',
+                unit: 'Million Tons',
+                unitShort: 'Mt',
+                prefix: '',
+                color: '#f1c40f',
+                minThreshold: 0,
+                maxThreshold: 15,
+                step: 0.05,
+                defaultThreshold: 0.05,
+                decimals: 2
+            },
+            'Hazardous': {
+                name: 'Hazardous Waste',
+                unit: 'Million Tons',
+                unitShort: 'Mt',
+                prefix: '',
+                color: '#e74c3c',
+                minThreshold: 0,
+                maxThreshold: 2,
+                step: 0.01,
+                defaultThreshold: 0.01,
+                decimals: 2
+            }
+        };
 
-        // Load full links data from file
-        let graphData = JSON.parse(JSON.stringify(fullGraphData));
-        
-        // We'll filter links dynamically
+        let currentFlowType = 'dollars';
+        let circularityData = null;
+        let graphData = { nodes: [], links: [] };
         let allLinks = [];
         
         // State variables
@@ -411,7 +576,7 @@
         let physicsEnabled = true;
         let selectedSector = null;
         let searchTerm = '';
-        let threshold = 0.01;
+        let threshold = flowTypeConfig['dollars'].defaultThreshold;
         let nodeSizeMultiplier = 1;
         let linkOpacity = 0.3;
         let hoveredNode = null;
@@ -431,33 +596,96 @@
         canvas.style.height = height + 'px';
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-        // Load full link data
-        fetch('graph_data_full.json')
-            .then(r => r.json())
-            .then(data => {
-                allLinks = data.links;
-                graphData.nodes = data.nodes;
-                initializeGraph();
-            })
-            .catch(err => {
-                console.log('Using embedded data');
-                // Use minimal embedded links for fallback
-                allLinks = [];
-                initializeGraph();
-            });
+        // Load circularity data with flows
+        Promise.all([
+            fetch('graph_data_full.json').then(r => r.json()),
+            fetch('circularity_data.json').then(r => r.json())
+        ]).then(([graphFullData, circData]) => {
+            circularityData = circData;
+            
+            // Use industries from circularity data if available
+            if (circData.industries) {
+                graphData.nodes = circData.industries.map((ind, i) => ({
+                    id: i,
+                    name: ind.name,
+                    sector: ind.sector,
+                    color: getSectorColor(ind.sector),
+                    output: ind.output
+                }));
+            } else {
+                graphData.nodes = graphFullData.nodes;
+            }
+            
+            allLinks = graphFullData.links || [];
+            initializeGraph();
+        }).catch(err => {
+            console.error('Error loading data:', err);
+        });
+
+        function getSectorColor(sector) {
+            const colors = {
+                'Agriculture, Forestry, Fishing': '#2ecc71',
+                'Mining': '#8b4513',
+                'Utilities': '#f1c40f',
+                'Construction': '#e67e22',
+                'Manufacturing': '#3498db',
+                'Wholesale Trade': '#9b59b6',
+                'Retail Trade': '#e91e63',
+                'Transportation': '#00bcd4',
+                'Information': '#673ab7',
+                'Finance & Insurance': '#4caf50',
+                'Real Estate': '#795548',
+                'Professional Services': '#ff9800',
+                'Management': '#607d8b',
+                'Admin & Waste Services': '#009688',
+                'Education': '#3f51b5',
+                'Healthcare': '#f44336',
+                'Arts & Entertainment': '#ff5722',
+                'Accommodation & Food': '#ffc107',
+                'Other Services': '#9e9e9e',
+                'Government': '#1a237e'
+            };
+            return colors[sector] || '#888888';
+        }
 
         function initializeGraph() {
+            updateThresholdDisplay();
             updateVisibleLinks();
             setupSimulation();
             setupLegend();
             setupControls();
+            setupSettingsPanel();
             render();
         }
 
         function updateVisibleLinks() {
-            graphData.links = allLinks.filter(l => l.value >= threshold);
+            const config = flowTypeConfig[currentFlowType];
+            
+            // Use circularity_data.json for ALL flow types (has correct numeric indices and units)
+            if (circularityData && circularityData.flow_types && circularityData.flow_types[currentFlowType]) {
+                const flowData = circularityData.flow_types[currentFlowType];
+                const topFlows = flowData.top_flows || [];
+                
+                graphData.links = topFlows
+                    .filter(f => f.value >= threshold && f.from !== f.to)
+                    .map(f => ({
+                        source: f.from,
+                        target: f.to,
+                        value: f.value
+                    }));
+            } else {
+                graphData.links = [];
+            }
+            
             document.getElementById('visible-links').textContent = graphData.links.length.toLocaleString();
             document.getElementById('visible-nodes').textContent = graphData.nodes.length;
+        }
+
+        function updateThresholdDisplay() {
+            const config = flowTypeConfig[currentFlowType];
+            const thresholdEl = document.getElementById('threshold-value');
+            const formattedValue = config.decimals > 0 ? threshold.toFixed(config.decimals) : Math.round(threshold);
+            thresholdEl.textContent = `${config.prefix}${formattedValue}${config.unitShort}`;
         }
 
         let simulation;
@@ -489,7 +717,7 @@
                 sectorColors[n.sector] = n.color;
             });
 
-            legend.innerHTML = '<h3>Sectors</h3>';
+            legend.innerHTML = '';
             
             sectors.forEach(sector => {
                 const item = document.createElement('div');
@@ -502,6 +730,24 @@
                 `;
                 item.addEventListener('click', () => toggleSector(sector));
                 legend.appendChild(item);
+            });
+        }
+
+        function setupSettingsPanel() {
+            const toggle = document.getElementById('settings-toggle');
+            const panel = document.getElementById('settings-panel');
+            const closeBtn = document.getElementById('settings-close');
+
+            toggle.addEventListener('click', () => {
+                panel.classList.toggle('open');
+                toggle.classList.toggle('open');
+                toggle.style.display = panel.classList.contains('open') ? 'none' : 'flex';
+            });
+
+            closeBtn.addEventListener('click', () => {
+                panel.classList.remove('open');
+                toggle.classList.remove('open');
+                toggle.style.display = 'flex';
             });
         }
 
@@ -520,12 +766,31 @@
         }
 
         function setupControls() {
-            // Threshold slider
+            // Flow type selector
+            const flowTypeSelect = document.getElementById('flow-type');
             const thresholdSlider = document.getElementById('threshold');
-            const thresholdValue = document.getElementById('threshold-value');
+            
+            function updateThresholdSlider() {
+                const config = flowTypeConfig[currentFlowType];
+                thresholdSlider.min = config.minThreshold;
+                thresholdSlider.max = config.maxThreshold;
+                thresholdSlider.step = config.step;
+                thresholdSlider.value = config.defaultThreshold;
+                threshold = config.defaultThreshold;
+                updateThresholdDisplay();
+            }
+            
+            flowTypeSelect.addEventListener('change', (e) => {
+                currentFlowType = e.target.value;
+                updateThresholdSlider();
+                updateVisibleLinks();
+                setupSimulation();
+            });
+
+            // Threshold slider
             thresholdSlider.addEventListener('input', (e) => {
-                threshold = e.target.value / 100;
-                thresholdValue.textContent = e.target.value + '%';
+                threshold = parseFloat(e.target.value);
+                updateThresholdDisplay();
                 updateVisibleLinks();
                 simulation.force('link').links(graphData.links);
                 simulation.alpha(0.3).restart();
@@ -674,20 +939,23 @@
             const inbound = graphData.links.filter(l => l.target.id === hoveredNode.id || l.target === hoveredNode.id).length;
             const outbound = graphData.links.filter(l => l.source.id === hoveredNode.id || l.source === hoveredNode.id).length;
 
+            const config = flowTypeConfig[currentFlowType];
+            const flowLabel = currentFlowType === 'dollars' ? 'Connections' : `${config.name} Links`;
+            
             tooltip.innerHTML = `
                 <div class="tooltip-title">${hoveredNode.name}</div>
                 <div class="tooltip-sector" style="background: ${hoveredNode.color}22; color: ${hoveredNode.color}">${hoveredNode.sector}</div>
                 <div class="tooltip-stats">
                     <div class="tooltip-stat">
                         <span class="tooltip-stat-label">Output</span>
-                        <span class="tooltip-stat-value">$${hoveredNode.output.toFixed(1)}B</span>
+                        <span class="tooltip-stat-value">$${hoveredNode.output?.toFixed(1) || '0'}B</span>
                     </div>
                     <div class="tooltip-stat">
-                        <span class="tooltip-stat-label">Suppliers</span>
+                        <span class="tooltip-stat-label">Inbound ${flowLabel}</span>
                         <span class="tooltip-stat-value">${inbound}</span>
                     </div>
                     <div class="tooltip-stat">
-                        <span class="tooltip-stat-label">Customers</span>
+                        <span class="tooltip-stat-label">Outbound ${flowLabel}</span>
                         <span class="tooltip-stat-value">${outbound}</span>
                     </div>
                 </div>
@@ -755,7 +1023,11 @@
                     }
                 }
 
-                ctx.strokeStyle = `rgba(100, 150, 200, ${alpha})`;
+                const flowColor = flowTypeConfig[currentFlowType].color;
+                const r = parseInt(flowColor.slice(1, 3), 16);
+                const g = parseInt(flowColor.slice(3, 5), 16);
+                const b = parseInt(flowColor.slice(5, 7), 16);
+                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                 ctx.beginPath();
                 ctx.moveTo(source.x, source.y);
                 ctx.lineTo(target.x, target.y);
