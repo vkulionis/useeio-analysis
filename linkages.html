@@ -673,12 +673,203 @@
         ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #d0d0d0; }
 
+        /* =============== CIRCULARITY PAGE STYLES =============== */
+        .circularity-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 24px;
+            min-height: 550px;
+        }
+
+        .network-container {
+            background: #fafafa;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            min-height: 550px;
+        }
+
+        .network-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #fafafa;
+        }
+
+        .circularity-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .circ-card {
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .circ-card-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .circ-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .circ-select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        .circ-control {
+            margin-bottom: 14px;
+        }
+
+        .circ-control:last-child {
+            margin-bottom: 0;
+        }
+
+        .circ-control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .circ-control-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .circ-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #e5e5e5;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .circ-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .circ-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .circ-stat {
+            background: #fafafa;
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .circ-stat-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .circ-stat-label {
+            font-size: 0.65rem;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .circ-legend {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .circ-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .circ-legend-item:hover {
+            opacity: 0.7;
+        }
+
+        .circ-legend-item.dimmed {
+            opacity: 0.3;
+        }
+
+        .circ-legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .circ-legend-count {
+            margin-left: auto;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #999;
+            font-size: 0.7rem;
+        }
+
+        .network-tooltip {
+            position: fixed;
+            pointer-events: none;
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            max-width: 280px;
+            z-index: 1000;
+            color: #1a1a1a;
+            opacity: 0;
+            transition: opacity 0.15s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .network-tooltip.visible { opacity: 1; }
+        .network-tooltip-title { font-weight: 600; margin-bottom: 4px; color: #1a1a1a; }
+        .network-tooltip-sector { font-size: 0.7rem; color: #666; margin-bottom: 8px; }
+        .network-tooltip-row { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 3px; }
+        .network-tooltip-label { color: #666; }
+        .network-tooltip-value { font-family: 'IBM Plex Mono', monospace; color: #3b82f6; }
+
         @media (max-width: 1100px) {
             .linkages-grid { grid-template-columns: 1fr; }
             .shock-container { flex-direction: column; }
             .shock-sidebar { width: 100%; }
             .metrics-row { grid-template-columns: repeat(2, 1fr); }
             .explanation-grid { grid-template-columns: 1fr; }
+            .circularity-grid { grid-template-columns: 1fr; height: auto; }
+            .network-container { height: 400px; }
         }
     </style>
 </head>
@@ -691,6 +882,7 @@
         <nav class="nav-tabs">
             <div class="nav-tab active" data-page="linkages">Linkages</div>
             <div class="nav-tab" data-page="shock">Shock Analysis</div>
+            <div class="nav-tab" data-page="circularity">Circularity</div>
         </nav>
     </header>
 
@@ -912,9 +1104,80 @@
                 </div>
             </div>
         </div>
+
+        <!-- =============== CIRCULARITY PAGE =============== -->
+        <div class="page" id="page-circularity">
+            <div class="page-intro">
+                <h2>Material Flow Network</h2>
+                <p>Visualize how materials and money flow between industries. Switch between <strong>dollar flows</strong> (economic transactions) and <strong>waste flows</strong> (MSW, construction debris, hazardous) to understand the circular economy potential.</p>
+            </div>
+
+            <div class="circularity-grid">
+                <div class="network-container">
+                    <canvas id="circ-canvas" class="network-canvas"></canvas>
+                </div>
+
+                <div class="circularity-sidebar">
+                    <div class="circ-card">
+                        <div class="circ-card-title">Statistics</div>
+                        <div class="circ-stats">
+                            <div class="circ-stat">
+                                <div class="circ-stat-value" id="circ-nodes">0</div>
+                                <div class="circ-stat-label">Industries</div>
+                            </div>
+                            <div class="circ-stat">
+                                <div class="circ-stat-value" id="circ-links">0</div>
+                                <div class="circ-stat-label">Flows</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="circ-card">
+                        <div class="circ-card-title">Flow Type</div>
+                        <select id="circ-flow-type" class="circ-select">
+                            <option value="dollars">Dollar Flows</option>
+                            <option value="MSW">MSW (Municipal Solid Waste)</option>
+                            <option value="CDD">CDD (Construction Debris)</option>
+                            <option value="Hazardous">Hazardous Waste</option>
+                        </select>
+                    </div>
+
+                    <div class="circ-card">
+                        <div class="circ-card-title">Display Settings</div>
+                        <div class="circ-control">
+                            <div class="circ-control-label">
+                                <span>Min Flow</span>
+                                <span class="circ-control-value" id="circ-threshold-value">$5B</span>
+                            </div>
+                            <input type="range" class="circ-slider" id="circ-threshold" min="0" max="100" step="1" value="5">
+                        </div>
+                        <div class="circ-control">
+                            <div class="circ-control-label">
+                                <span>Node Size</span>
+                                <span class="circ-control-value" id="circ-size-value">1.0x</span>
+                            </div>
+                            <input type="range" class="circ-slider" id="circ-node-size" min="0.3" max="2" step="0.1" value="1">
+                        </div>
+                        <div class="circ-control">
+                            <div class="circ-control-label">
+                                <span>Link Opacity</span>
+                                <span class="circ-control-value" id="circ-opacity-value">30%</span>
+                            </div>
+                            <input type="range" class="circ-slider" id="circ-link-opacity" min="5" max="80" step="5" value="30">
+                        </div>
+                    </div>
+
+                    <div class="circ-card" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                        <div class="circ-card-title">Sectors</div>
+                        <div class="circ-legend" id="circ-legend"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <div class="tooltip" id="tooltip"></div>
+    <div class="network-tooltip" id="network-tooltip"></div>
 
     <script>
         // Data
@@ -927,12 +1190,34 @@
         let selectedChartIndustry = null;
         let chartElements = null;
 
+        // Circularity data
+        let circularityData = null;
+        let circNodes = [];
+        let circLinks = [];
+        let circCurrentFlowType = 'dollars';
+        let circThreshold = 5;
+        let circNodeSizeMultiplier = 1;
+        let circLinkOpacity = 0.3;
+        let circSelectedSector = null;
+        let circHoveredNode = null;
+        let circSimulation = null;
+        let circTransform = d3.zoomIdentity;
+
+        const circFlowConfig = {
+            'dollars': { name: 'Dollar Flows', prefix: '$', unitShort: 'B', color: '#3b82f6', min: 0, max: 100, step: 1, default: 5, decimals: 0 },
+            'MSW': { name: 'MSW Waste', prefix: '', unitShort: 'Mt', color: '#22c55e', min: 0, max: 2, step: 0.01, default: 0.05, decimals: 2 },
+            'CDD': { name: 'CDD Waste', prefix: '', unitShort: 'Mt', color: '#eab308', min: 0, max: 15, step: 0.05, default: 0.05, decimals: 2 },
+            'Hazardous': { name: 'Hazardous Waste', prefix: '', unitShort: 'Mt', color: '#ef4444', min: 0, max: 2, step: 0.01, default: 0.01, decimals: 2 }
+        };
+
         // Load data
         Promise.all([
             fetch('linkages_data.json').then(r => r.json()),
-            fetch('shock_data.json').then(r => r.json())
-        ]).then(([linkages, shock]) => {
+            fetch('shock_data.json').then(r => r.json()),
+            fetch('circularity_data.json').then(r => r.json())
+        ]).then(([linkages, shock, circularity]) => {
             linkagesData = linkages.industries;
+            circularityData = circularity;
             
             const linkagesMap = {};
             linkagesData.forEach(d => linkagesMap[d.id] = d);
@@ -949,16 +1234,26 @@
             
             initLinkagesPage();
             initShockPage();
+            initCircularityPage();
             updateStats();
         });
 
         // Navigation
+        let circularityInitialized = false;
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
                 document.getElementById(`page-${tab.dataset.page}`).classList.add('active');
+                
+                // Initialize circularity canvas when tab is first shown
+                if (tab.dataset.page === 'circularity' && !circularityInitialized && circularityData) {
+                    circularityInitialized = true;
+                    setTimeout(() => {
+                        setupCircCanvas();
+                    }, 50);
+                }
             });
         });
 
@@ -1537,6 +1832,390 @@
                     </table>
                 </div>
             `;
+        }
+
+        // =============== CIRCULARITY PAGE ===============
+        function getCircSectorColor(sector) {
+            const colors = {
+                'Agriculture, Forestry, Fishing': '#22c55e',
+                'Mining': '#a16207',
+                'Utilities': '#eab308',
+                'Construction': '#f97316',
+                'Manufacturing': '#3b82f6',
+                'Wholesale Trade': '#a855f7',
+                'Retail Trade': '#ec4899',
+                'Transportation': '#06b6d4',
+                'Information': '#8b5cf6',
+                'Finance & Insurance': '#10b981',
+                'Real Estate': '#78716c',
+                'Professional Services': '#f59e0b',
+                'Management': '#6b7280',
+                'Admin & Waste Services': '#14b8a6',
+                'Education': '#6366f1',
+                'Healthcare': '#ef4444',
+                'Arts & Entertainment': '#f97316',
+                'Accommodation & Food': '#fbbf24',
+                'Other Services': '#9ca3af',
+                'Government': '#1e3a8a'
+            };
+            return colors[sector] || '#6b7280';
+        }
+
+        function initCircularityPage() {
+            if (!circularityData || !circularityData.industries) return;
+
+            // Build nodes
+            circNodes = circularityData.industries.map((ind, i) => ({
+                id: i,
+                name: ind.name,
+                sector: ind.sector,
+                color: getCircSectorColor(ind.sector),
+                output: ind.output
+            }));
+
+            updateCircLinks();
+            setupCircLegend();
+            setupCircControls();
+            // Note: setupCircCanvas is called when the tab is first clicked (see navigation handler)
+        }
+
+        function updateCircLinks() {
+            const flowData = circularityData.flow_types?.[circCurrentFlowType];
+            if (!flowData || !flowData.top_flows) {
+                circLinks = [];
+            } else {
+                circLinks = flowData.top_flows
+                    .filter(f => f.value >= circThreshold && f.from !== f.to)
+                    .map(f => ({ source: f.from, target: f.to, value: f.value }));
+            }
+
+            document.getElementById('circ-nodes').textContent = circNodes.length;
+            document.getElementById('circ-links').textContent = circLinks.length.toLocaleString();
+        }
+
+        function updateCircThresholdDisplay() {
+            const config = circFlowConfig[circCurrentFlowType];
+            const el = document.getElementById('circ-threshold-value');
+            const formatted = config.decimals > 0 ? circThreshold.toFixed(config.decimals) : Math.round(circThreshold);
+            el.textContent = `${config.prefix}${formatted}${config.unitShort}`;
+        }
+
+        let circCanvas, circCtx, circWidth, circHeight;
+
+        function setupCircCanvas() {
+            circCanvas = document.getElementById('circ-canvas');
+            if (!circCanvas) return;
+            
+            circCtx = circCanvas.getContext('2d');
+            const container = circCanvas.parentElement;
+
+            function resize() {
+                circWidth = container.clientWidth || 800;
+                circHeight = container.clientHeight || 550;
+                circCanvas.width = circWidth * window.devicePixelRatio;
+                circCanvas.height = circHeight * window.devicePixelRatio;
+                circCanvas.style.width = circWidth + 'px';
+                circCanvas.style.height = circHeight + 'px';
+                circCtx.setTransform(1, 0, 0, 1, 0, 0);
+                circCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            }
+
+            resize();
+            
+            // Initialize node positions near center
+            circNodes.forEach((node, i) => {
+                const angle = (i / circNodes.length) * Math.PI * 2;
+                const radius = Math.min(circWidth, circHeight) * 0.3;
+                node.x = circWidth / 2 + Math.cos(angle) * radius * Math.random();
+                node.y = circHeight / 2 + Math.sin(angle) * radius * Math.random();
+            });
+
+            window.addEventListener('resize', () => {
+                resize();
+                if (circSimulation) {
+                    circSimulation.force('center', d3.forceCenter(circWidth / 2, circHeight / 2));
+                    circSimulation.alpha(0.3).restart();
+                }
+            });
+
+            setupCircSimulation();
+            setupCircInteractions();
+        }
+
+        function setupCircSimulation() {
+            if (circSimulation) circSimulation.stop();
+
+            circSimulation = d3.forceSimulation(circNodes)
+                .force('link', d3.forceLink(circLinks).id(d => d.id).distance(40).strength(0.2))
+                .force('charge', d3.forceManyBody().strength(-60).distanceMax(250))
+                .force('center', d3.forceCenter(circWidth / 2, circHeight / 2))
+                .force('collision', d3.forceCollide().radius(d => getCircNodeRadius(d) + 2))
+                .alphaDecay(0.02)
+                .on('tick', renderCircNetwork);
+        }
+
+        function getCircNodeRadius(d) {
+            return (Math.sqrt(d.output) * 0.8 + 2) * circNodeSizeMultiplier;
+        }
+
+        function renderCircNetwork() {
+            circCtx.save();
+            circCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+            
+            // Clear with light background
+            circCtx.fillStyle = '#fafafa';
+            circCtx.fillRect(0, 0, circWidth, circHeight);
+
+            circCtx.translate(circTransform.x, circTransform.y);
+            circCtx.scale(circTransform.k, circTransform.k);
+
+            const config = circFlowConfig[circCurrentFlowType];
+            const flowColor = config.color;
+            const r = parseInt(flowColor.slice(1, 3), 16);
+            const g = parseInt(flowColor.slice(3, 5), 16);
+            const b = parseInt(flowColor.slice(5, 7), 16);
+
+            // Draw links
+            circCtx.lineWidth = 0.5;
+            circLinks.forEach(link => {
+                const source = typeof link.source === 'object' ? link.source : circNodes.find(n => n.id === link.source);
+                const target = typeof link.target === 'object' ? link.target : circNodes.find(n => n.id === link.target);
+                if (!source || !target) return;
+
+                let alpha = circLinkOpacity;
+                if (circHoveredNode) {
+                    const sid = source.id ?? source;
+                    const tid = target.id ?? target;
+                    if (sid === circHoveredNode.id || tid === circHoveredNode.id) {
+                        alpha = 0.8;
+                        circCtx.lineWidth = 1.5;
+                    } else {
+                        alpha = 0.03;
+                    }
+                }
+                if (circSelectedSector) {
+                    if (source.sector !== circSelectedSector && target.sector !== circSelectedSector) {
+                        alpha = 0.02;
+                    }
+                }
+
+                circCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                circCtx.beginPath();
+                circCtx.moveTo(source.x, source.y);
+                circCtx.lineTo(target.x, target.y);
+                circCtx.stroke();
+                circCtx.lineWidth = 0.5;
+            });
+
+            // Draw nodes
+            circNodes.forEach(node => {
+                const radius = getCircNodeRadius(node);
+                let alpha = 1;
+
+                if (circHoveredNode && node.id !== circHoveredNode.id) {
+                    const connected = circLinks.some(l => {
+                        const sid = l.source.id ?? l.source;
+                        const tid = l.target.id ?? l.target;
+                        return (sid === circHoveredNode.id && tid === node.id) || (tid === circHoveredNode.id && sid === node.id);
+                    });
+                    if (!connected) alpha = 0.15;
+                }
+                if (circSelectedSector && node.sector !== circSelectedSector) {
+                    alpha = 0.15;
+                }
+
+                circCtx.globalAlpha = alpha;
+                circCtx.fillStyle = node.color;
+                circCtx.beginPath();
+                circCtx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+                circCtx.fill();
+
+                if (circHoveredNode && node.id === circHoveredNode.id) {
+                    circCtx.strokeStyle = '#1a1a1a';
+                    circCtx.lineWidth = 2;
+                    circCtx.stroke();
+                }
+                circCtx.globalAlpha = 1;
+            });
+
+            circCtx.restore();
+        }
+
+        function setupCircInteractions() {
+            const tooltip = document.getElementById('network-tooltip');
+
+            circCanvas.addEventListener('mousemove', (e) => {
+                const rect = circCanvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left - circTransform.x) / circTransform.k;
+                const y = (e.clientY - rect.top - circTransform.y) / circTransform.k;
+
+                let found = null;
+                for (const node of circNodes) {
+                    const dx = node.x - x;
+                    const dy = node.y - y;
+                    const r = getCircNodeRadius(node);
+                    if (dx * dx + dy * dy < r * r) {
+                        found = node;
+                        break;
+                    }
+                }
+
+                if (found !== circHoveredNode) {
+                    circHoveredNode = found;
+                    renderCircNetwork();
+
+                    if (found) {
+                        const config = circFlowConfig[circCurrentFlowType];
+                        const inbound = circLinks.filter(l => (l.target.id ?? l.target) === found.id).length;
+                        const outbound = circLinks.filter(l => (l.source.id ?? l.source) === found.id).length;
+
+                        tooltip.innerHTML = `
+                            <div class="network-tooltip-title">${found.name}</div>
+                            <div class="network-tooltip-sector">${found.sector}</div>
+                            <div class="network-tooltip-row">
+                                <span class="network-tooltip-label">Output</span>
+                                <span class="network-tooltip-value">$${found.output.toFixed(1)}B</span>
+                            </div>
+                            <div class="network-tooltip-row">
+                                <span class="network-tooltip-label">Inbound flows</span>
+                                <span class="network-tooltip-value">${inbound}</span>
+                            </div>
+                            <div class="network-tooltip-row">
+                                <span class="network-tooltip-label">Outbound flows</span>
+                                <span class="network-tooltip-value">${outbound}</span>
+                            </div>
+                        `;
+                        tooltip.style.left = (e.clientX + 12) + 'px';
+                        tooltip.style.top = (e.clientY + 12) + 'px';
+                        tooltip.classList.add('visible');
+                    } else {
+                        tooltip.classList.remove('visible');
+                    }
+                }
+            });
+
+            circCanvas.addEventListener('mouseleave', () => {
+                circHoveredNode = null;
+                tooltip.classList.remove('visible');
+                renderCircNetwork();
+            });
+
+            // Zoom
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 5])
+                .on('zoom', (e) => {
+                    circTransform = e.transform;
+                    renderCircNetwork();
+                });
+
+            d3.select(circCanvas).call(zoom);
+
+            // Drag
+            d3.select(circCanvas).call(d3.drag()
+                .subject((e) => {
+                    const x = (e.x - circTransform.x) / circTransform.k;
+                    const y = (e.y - circTransform.y) / circTransform.k;
+                    for (const node of circNodes) {
+                        const dx = node.x - x;
+                        const dy = node.y - y;
+                        const r = getCircNodeRadius(node);
+                        if (dx * dx + dy * dy < r * r) return node;
+                    }
+                    return null;
+                })
+                .on('start', (e) => {
+                    if (!e.active) circSimulation.alphaTarget(0.3).restart();
+                    e.subject.fx = e.subject.x;
+                    e.subject.fy = e.subject.y;
+                })
+                .on('drag', (e) => {
+                    e.subject.fx = (e.x - circTransform.x) / circTransform.k;
+                    e.subject.fy = (e.y - circTransform.y) / circTransform.k;
+                })
+                .on('end', (e) => {
+                    if (!e.active) circSimulation.alphaTarget(0);
+                    e.subject.fx = null;
+                    e.subject.fy = null;
+                })
+            );
+        }
+
+        function setupCircLegend() {
+            const legend = document.getElementById('circ-legend');
+            const sectors = [...new Set(circNodes.map(n => n.sector))].sort();
+            const sectorCounts = {};
+            const sectorColors = {};
+
+            circNodes.forEach(n => {
+                sectorCounts[n.sector] = (sectorCounts[n.sector] || 0) + 1;
+                sectorColors[n.sector] = n.color;
+            });
+
+            legend.innerHTML = sectors.map(sector => `
+                <div class="circ-legend-item" data-sector="${sector}">
+                    <div class="circ-legend-color" style="background: ${sectorColors[sector]}"></div>
+                    <span>${sector}</span>
+                    <span class="circ-legend-count">${sectorCounts[sector]}</span>
+                </div>
+            `).join('');
+
+            legend.querySelectorAll('.circ-legend-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const sector = item.dataset.sector;
+                    if (circSelectedSector === sector) {
+                        circSelectedSector = null;
+                        legend.querySelectorAll('.circ-legend-item').forEach(el => el.classList.remove('dimmed'));
+                    } else {
+                        circSelectedSector = sector;
+                        legend.querySelectorAll('.circ-legend-item').forEach(el => {
+                            el.classList.toggle('dimmed', el.dataset.sector !== sector);
+                        });
+                    }
+                    renderCircNetwork();
+                });
+            });
+        }
+
+        function setupCircControls() {
+            const flowSelect = document.getElementById('circ-flow-type');
+            const thresholdSlider = document.getElementById('circ-threshold');
+            const sizeSlider = document.getElementById('circ-node-size');
+            const opacitySlider = document.getElementById('circ-link-opacity');
+
+            flowSelect.addEventListener('change', (e) => {
+                circCurrentFlowType = e.target.value;
+                const config = circFlowConfig[circCurrentFlowType];
+
+                thresholdSlider.min = config.min;
+                thresholdSlider.max = config.max;
+                thresholdSlider.step = config.step;
+                thresholdSlider.value = config.default;
+                circThreshold = config.default;
+
+                updateCircThresholdDisplay();
+                updateCircLinks();
+                setupCircSimulation();
+            });
+
+            thresholdSlider.addEventListener('input', (e) => {
+                circThreshold = parseFloat(e.target.value);
+                updateCircThresholdDisplay();
+                updateCircLinks();
+                circSimulation.force('link').links(circLinks);
+                circSimulation.alpha(0.3).restart();
+            });
+
+            sizeSlider.addEventListener('input', (e) => {
+                circNodeSizeMultiplier = parseFloat(e.target.value);
+                document.getElementById('circ-size-value').textContent = circNodeSizeMultiplier.toFixed(1) + 'x';
+                renderCircNetwork();
+            });
+
+            opacitySlider.addEventListener('input', (e) => {
+                circLinkOpacity = e.target.value / 100;
+                document.getElementById('circ-opacity-value').textContent = e.target.value + '%';
+                renderCircNetwork();
+            });
         }
     </script>
 </body>
