@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Economy Network - USEEIO v2.0.1</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #graph {
+            width: 100%;
+            height: 100%;
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 20px 28px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .legend h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .legend-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item.dimmed {
+            opacity: 0.3;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            font-size: 0.85rem;
+            max-width: 320px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .tooltip-sector {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .tooltip-stats {
+            display: grid;
+            gap: 6px;
+        }
+
+        .tooltip-stat {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .tooltip-stat-label {
+            color: #888;
+        }
+
+        .tooltip-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: #00d4ff;
+            font-weight: 500;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            background: rgba(30, 30, 45, 0.9);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .control-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 140px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+        }
+
+        .stats-panel h3 {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: #7c3aed;
+            font-weight: 500;
+        }
+
+        .link {
+            stroke-opacity: 0.4;
+            fill: none;
+        }
+
+        .link.highlighted {
+            stroke-opacity: 0.9;
+        }
+
+        .link.dimmed {
+            stroke-opacity: 0.05;
+        }
+
+        .node {
+            cursor: pointer;
+        }
+
+        .node circle {
+            stroke: rgba(255, 255, 255, 0.3);
+            stroke-width: 2px;
+            transition: all 0.2s;
+        }
+
+        .node:hover circle {
+            stroke: #fff;
+            stroke-width: 3px;
+            filter: brightness(1.2);
+        }
+
+        .node.dimmed circle {
+            opacity: 0.15;
+        }
+
+        .node-label {
+            font-size: 10px;
+            fill: #ccc;
+            pointer-events: none;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .node.dimmed .node-label {
+            opacity: 0.1;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="header">
+            <h1>US Economy Network</h1>
+            <p>USEEIO v2.0.1 • Direct Requirements Matrix • 147 Industries</p>
+        </div>
+
+        <div class="stats-panel">
+            <h3>Network Stats</h3>
+            <div class="stat-row">
+                <span>Industries</span>
+                <span class="stat-value" id="node-count">-</span>
+            </div>
+            <div class="stat-row">
+                <span>Connections</span>
+                <span class="stat-value" id="link-count">-</span>
+            </div>
+            <div class="stat-row">
+                <span>Threshold</span>
+                <span class="stat-value">&gt;12%</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" id="reset-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                </svg>
+                Reset View
+            </button>
+            <button class="control-btn" id="toggle-labels">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 7V4h16v3"/>
+                    <path d="M9 20h6"/>
+                    <path d="M12 4v16"/>
+                </svg>
+                Toggle Labels
+            </button>
+            <button class="control-btn" id="toggle-physics">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v10"/>
+                    <path d="m4.2 4.2 4.3 4.3m7 7 4.3 4.3"/>
+                    <path d="M1 12h6m6 0h10"/>
+                    <path d="m4.2 19.8 4.3-4.3m7-7 4.3-4.3"/>
+                </svg>
+                Toggle Physics
+            </button>
+        </div>
+
+        <div class="legend" id="legend"></div>
+        <div class="tooltip" id="tooltip"></div>
+        <svg id="graph"></svg>
+    </div>
+
+    <script>
+        // Graph data will be loaded from JSON
+        const graphData = {"nodes":[{"id":"1111A0/US","name":"Fresh soybeans, canola, flaxseeds, and other oilseeds","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":38.41},{"id":"311225/US","name":"Vegetable oils and by-products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":30.27},{"id":"1111B0/US","name":"Fresh wheat, corn, rice, and other grains","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":65.87},{"id":"311210/US","name":"Flours and malts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.22},{"id":"111200/US","name":"Fresh vegetables, melons, and potatoes","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":24.7},{"id":"311400/US","name":"Frozen fruits, juices, and vegetables","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":31.82},{"id":"111300/US","name":"Fresh fruits and tree nuts","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":36.91},{"id":"111900/US","name":"Tobacco, cotton, sugarcane, peanuts, sugar beets, herbs and spices, and other crops","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":37.0},{"id":"313100/US","name":"Fiber, yarn, and thread","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.15},{"id":"112120/US","name":"Dairies","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":39.17},{"id":"311500/US","name":"Fluid milk and butter","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":53.75},{"id":"1121A0/US","name":"Cattle ranches and feedlots","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":70.86},{"id":"31161A/US","name":"Packaged meat (except poultry)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":107.65},{"id":"112300/US","name":"Poultry farms","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":41.35},{"id":"311615/US","name":"Packaged poultry","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":51.62},{"id":"112A00/US","name":"Animal farms and aquaculture ponds (except cattle and poultry)","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":17.62},{"id":"114000/US","name":"Wild-caught fish and game","sector":"Agriculture","sectorCode":"11","color":"#2ecc71","output":8.52},{"id":"311700/US","name":"Seafood","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.69},{"id":"211000/US","name":"Unrefined oil and gas","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":362.66},{"id":"324110/US","name":"Asphalt pavement","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":784.61},{"id":"212230/US","name":"Copper, nickel, lead, and zinc","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":10.13},{"id":"331410/US","name":"Secondary copper products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.99},{"id":"2122A0/US","name":"Iron, gold, silver, and other metal ores","sector":"Mining & Oil/Gas","sectorCode":"21","color":"#8b4513","output":21.7},{"id":"331490/US","name":"Other secondary nonferrous metal products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.66},{"id":"221100/US","name":"Electricity","sector":"Utilities","sectorCode":"22","color":"#f1c40f","output":366.95},{"id":"325310/US","name":"Fertilizers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":26.76},{"id":"221200/US","name":"Natural gas","sector":"Utilities","sectorCode":"22","color":"#f1c40f","output":58.5},{"id":"311221/US","name":"Corn products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.53},{"id":"321100/US","name":"Lumber and treated lumber","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.25},{"id":"321910/US","name":"Wooden windows, door, and flooring","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.06},{"id":"324121/US","name":"Asphalt materials, including shingles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.92},{"id":"324191/US","name":"Gasoline, fuels, and by-products of petroleum refining","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":70.61},{"id":"325110/US","name":"Petrochemicals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":40.0},{"id":"325130/US","name":"Synthetic dyes and pigments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.41},{"id":"325180/US","name":"Other basic inorganic chemicals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.6},{"id":"325190/US","name":"Other basic organic chemicals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":55.81},{"id":"325211/US","name":"Plastics","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":86.17},{"id":"326110/US","name":"Plastic bags, films, and sheets","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":29.02},{"id":"326120/US","name":"Plastic pipe, fittings, and sausage casings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.53},{"id":"326160/US","name":"Plastic bottles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.55},{"id":"325212/US","name":"Synthetic rubber and artificial and synthetic fibers and filaments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.56},{"id":"325320/US","name":"Pesticides","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":15.72},{"id":"327310/US","name":"Cement","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.84},{"id":"327320/US","name":"Concrete","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":39.38},{"id":"331110/US","name":"Primary iron, steel, and ferroalloy products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":64.69},{"id":"332114/US","name":"Custom metal rolls","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.06},{"id":"3312A0/US","name":"Secondary steel products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":27.18},{"id":"331510/US","name":"Ferrous metal foundry products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.52},{"id":"331520/US","name":"Nonferrous metal foundry products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.78},{"id":"336390/US","name":"Other motor vehicle parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":62.89},{"id":"336350/US","name":"Vehicle power transmission equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.6},{"id":"3363A0/US","name":"Vehicle seating and interior trim (upholstered)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.66},{"id":"3323A0/US","name":"Metal windows, doors, and architectural products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.25},{"id":"332430/US","name":"Metal cans, boxes, and miscellaneous products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":31.08},{"id":"332800/US","name":"Metal coatings, engravings, and heat treatments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.77},{"id":"332710/US","name":"Machine shop products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.75},{"id":"336211/US","name":"Vehicle bodies","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.37},{"id":"336370/US","name":"Vehicle metal stamping","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.75},{"id":"333120/US","name":"Construction equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":32.05},{"id":"333130/US","name":"Mining and oil and gas field machinery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.35},{"id":"333111/US","name":"Farm machinery and equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.46},{"id":"333920/US","name":"Conveyors and conveying equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.98},{"id":"333415/US","name":"Air conditioners, fans, blowers, and purification equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":37.03},{"id":"33441A/US","name":"Printed circuit boards and electronic components","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":34.85},{"id":"33451A/US","name":"Geophysical equipment, clocks, and other instruments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":26.12},{"id":"334510/US","name":"Electromedical apparatus","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":34.46},{"id":"334300/US","name":"Audio and video equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.87},{"id":"335311/US","name":"Electric power and specialty transformers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.22},{"id":"3359A0/US","name":"Battery, wiring, and other electrical equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":36.63},{"id":"335110/US","name":"Light bulbs and tubes","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.25},{"id":"335120/US","name":"Lighting fixtures","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.47},{"id":"335210/US","name":"Small appliances","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":6.83},{"id":"335220/US","name":"Large appliances","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":22.28},{"id":"336120/US","name":"Heavy duty trucks","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":30.35},{"id":"336214/US","name":"Trailers and campers (motor homes)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.1},{"id":"336411/US","name":"Aircraft","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":79.5},{"id":"336412/US","name":"Aircraft engines and parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":51.1},{"id":"3364A0/US","name":"Other aircraft parts","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.25},{"id":"336500/US","name":"Trains, boats, cycles, and other vehicles","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":33.13},{"id":"336611/US","name":"Ships and boats","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.07},{"id":"337000/US","name":"Furniture, related products, and blinds","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":82.64},{"id":"339112/US","name":"Surgical instruments, supplies, and laboratory products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":53.8},{"id":"339113/US","name":"Dental equipment and supplies","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":5.91},{"id":"339910/US","name":"Jewelry and silverware","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":11.88},{"id":"33991A/US","name":"Sporting and athletic goods (except dolls, toys, and games)","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":17.74},{"id":"3399A0/US","name":"Office supplies and miscellaneous manufactured goods","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.8},{"id":"339930/US","name":"Dolls, toys, and games","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.78},{"id":"311110/US","name":"Dog and cat food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":20.94},{"id":"311119/US","name":"Other animal food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":42.19},{"id":"311230/US","name":"Breakfast cereals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.48},{"id":"311300/US","name":"Sugar and confectionery products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":29.0},{"id":"311600/US","name":"Dry, condensed, and evaporated dairy products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":28.61},{"id":"311800/US","name":"Bakery products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":57.64},{"id":"3119A0/US","name":"Coffee and tea","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.88},{"id":"3119B0/US","name":"Flavoring syrups, seasonings, and dressings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.22},{"id":"311910/US","name":"Snack food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":37.36},{"id":"311940/US","name":"Frozen food","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.55},{"id":"312110/US","name":"Soft drinks","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":38.7},{"id":"312120/US","name":"Beer, wine, and liquor","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":56.88},{"id":"312200/US","name":"Tobacco products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":35.52},{"id":"313200/US","name":"Fabrics","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.3},{"id":"314110/US","name":"Carpet and rugs","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.36},{"id":"31499A/US","name":"Net bags, twine, rope, tire cord, and other textiles and products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":7.07},{"id":"316000/US","name":"Leather and allied products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":9.57},{"id":"322100/US","name":"Pulp and paper","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":42.38},{"id":"322210/US","name":"Cardboard","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":33.64},{"id":"32222A/US","name":"Coated and laminated paper, except packaging","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":16.08},{"id":"32222B/US","name":"Coated, laminated, and compressed paper packaging","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":38.6},{"id":"322230/US","name":"Stationery","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":8.98},{"id":"322291/US","name":"Sanitary paper products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":18.88},{"id":"322A00/US","name":"Cardboard containers","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":52.18},{"id":"323100/US","name":"Printed media","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":70.76},{"id":"324199/US","name":"All other petroleum and coal products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":38.75},{"id":"325400/US","name":"Pharmaceuticals","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":168.81},{"id":"325500/US","name":"Paints and coatings","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.15},{"id":"325600/US","name":"Soaps, cleaning compounds, and toilet preparations","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":68.35},{"id":"326200/US","name":"Rubber products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":33.43},{"id":"327100/US","name":"Clay products and refractories","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":14.42},{"id":"327200/US","name":"Glass products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":24.7},{"id":"331313/US","name":"Primary aluminum products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.81},{"id":"33131B/US","name":"Secondary aluminum products","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":13.57},{"id":"332310/US","name":"Metal structures","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":34.59},{"id":"332320/US","name":"Metal ornaments","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":5.84},{"id":"3324A0/US","name":"Arms, ammunition, ordnance, and accessories","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":21.38},{"id":"332910/US","name":"Metal valves","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":23.54},{"id":"33299A/US","name":"Springs and other hardware","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":28.22},{"id":"484000/US","name":"Truck transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":297.77},{"id":"481000/US","name":"Air transport","sector":"Transportation","sectorCode":"48-49","color":"#00bcd4","output":179.61},{"id":"517110/US","name":"Wireless telecommunications","sector":"Information","sectorCode":"51","color":"#673ab7","output":310.72},{"id":"517A00/US","name":"Satellite, telecommunications resellers, and other telecommunications","sector":"Information","sectorCode":"51","color":"#673ab7","output":86.16},{"id":"5241XX/US","name":"Insurance agencies and brokerages","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":428.14},{"id":"524100/US","name":"Insurance carriers, except direct life","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":203.55},{"id":"52A000/US","name":"Investment advice, portfolio management, and other financial advising services","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":448.25},{"id":"525000/US","name":"Funds, trusts, and financial vehicles","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":67.55},{"id":"523000/US","name":"Securities and commodities brokerage and related services","sector":"Finance & Insurance","sectorCode":"52","color":"#4caf50","output":214.65},{"id":"531HST/US","name":"Other real estate","sector":"Real Estate","sectorCode":"53","color":"#795548","output":431.91},{"id":"550000/US","name":"Company and enterprise management","sector":"Management","sectorCode":"55","color":"#607d8b","output":478.78},{"id":"56290A/US","name":"Hazardous waste collection treatment and disposal services","sector":"Admin & Waste Services","sectorCode":"56","color":"#009688","output":11.0},{"id":"812100/US","name":"Personal care services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":64.28},{"id":"812200/US","name":"Death care services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":19.73},{"id":"8123A0/US","name":"Coin-operated laundries and drycleaners, and garment repair services","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":28.7},{"id":"813A00/US","name":"Grantmaking, giving, advocacy, civic, professional, and similar organizations","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":68.04},{"id":"813B00/US","name":"Religious organizations","sector":"Other Services","sectorCode":"81","color":"#9e9e9e","output":113.22},{"id":"325920/US","name":"Compressed gases","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.03},{"id":"333112/US","name":"Lawn and garden equipment","sector":"Manufacturing","sectorCode":"31-33","color":"#3498db","output":10.97}],"links":[{"source":"1111A0/US","target":"311225/US","value":0.514},{"source":"1111B0/US","target":"311210/US","value":0.578},{"source":"1111B0/US","target":"311221/US","value":0.409},{"source":"111200/US","target":"311400/US","value":0.232},{"source":"111300/US","target":"311400/US","value":0.179},{"source":"111900/US","target":"313100/US","value":0.129},{"source":"112120/US","target":"311500/US","value":0.37},{"source":"112120/US","target":"311600/US","value":0.175},{"source":"1121A0/US","target":"31161A/US","value":0.367},{"source":"112300/US","target":"311615/US","value":0.428},{"source":"112A00/US","target":"311700/US","value":0.161},{"source":"114000/US","target":"311700/US","value":0.401},{"source":"211000/US","target":"324110/US","value":0.132},{"source":"211000/US","target":"324191/US","value":0.66},{"source":"212230/US","target":"331410/US","value":0.366},{"source":"2122A0/US","target":"331490/US","value":0.182},{"source":"221100/US","target":"325310/US","value":0.127},{"source":"221200/US","target":"325110/US","value":0.124},{"source":"321100/US","target":"321910/US","value":0.303},{"source":"324110/US","target":"324121/US","value":0.132},{"source":"324191/US","target":"324110/US","value":0.403},{"source":"325110/US","target":"325130/US","value":0.143},{"source":"325110/US","target":"325180/US","value":0.124},{"source":"325110/US","target":"325190/US","value":0.246},{"source":"325110/US","target":"325211/US","value":0.244},{"source":"325110/US","target":"325212/US","value":0.21},{"source":"325180/US","target":"325320/US","value":0.157},{"source":"325190/US","target":"325211/US","value":0.123},{"source":"325190/US","target":"325212/US","value":0.129},{"source":"325190/US","target":"325320/US","value":0.167},{"source":"325211/US","target":"326110/US","value":0.322},{"source":"325211/US","target":"326120/US","value":0.354},{"source":"325211/US","target":"326160/US","value":0.353},{"source":"325212/US","target":"313100/US","value":0.385},{"source":"327310/US","target":"327320/US","value":0.192},{"source":"331110/US","target":"332114/US","value":0.498},{"source":"331110/US","target":"3312A0/US","value":0.287},{"source":"331110/US","target":"331510/US","value":0.242},{"source":"331110/US","target":"331520/US","value":0.12},{"source":"331110/US","target":"336350/US","value":0.134},{"source":"331110/US","target":"336370/US","value":0.366},{"source":"331110/US","target":"336390/US","value":0.124},{"source":"331110/US","target":"3363A0/US","value":0.131},{"source":"3312A0/US","target":"3323A0/US","value":0.227},{"source":"3312A0/US","target":"332430/US","value":0.195},{"source":"3312A0/US","target":"332800/US","value":0.136},{"source":"331410/US","target":"331520/US","value":0.138},{"source":"331520/US","target":"336390/US","value":0.122},{"source":"332710/US","target":"333120/US","value":0.128},{"source":"332710/US","target":"333130/US","value":0.136},{"source":"332710/US","target":"336500/US","value":0.122},{"source":"333120/US","target":"333111/US","value":0.215},{"source":"333415/US","target":"335220/US","value":0.152},{"source":"33441A/US","target":"33451A/US","value":0.169},{"source":"33441A/US","target":"334510/US","value":0.142},{"source":"334300/US","target":"334510/US","value":0.178},{"source":"335311/US","target":"335220/US","value":0.155},{"source":"3359A0/US","target":"335110/US","value":0.126},{"source":"3359A0/US","target":"335120/US","value":0.151},{"source":"3359A0/US","target":"335210/US","value":0.173},{"source":"3359A0/US","target":"335220/US","value":0.16},{"source":"336120/US","target":"336214/US","value":0.401},{"source":"336211/US","target":"336214/US","value":0.246},{"source":"336390/US","target":"336350/US","value":0.173},{"source":"336411/US","target":"336412/US","value":0.244},{"source":"336411/US","target":"3364A0/US","value":0.281},{"source":"336412/US","target":"336411/US","value":0.123},{"source":"336500/US","target":"336611/US","value":0.198},{"source":"337000/US","target":"339910/US","value":0.122},{"source":"337000/US","target":"33991A/US","value":0.128},{"source":"337000/US","target":"3399A0/US","value":0.139},{"source":"337000/US","target":"339930/US","value":0.132},{"source":"311110/US","target":"311119/US","value":0.195},{"source":"311119/US","target":"112300/US","value":0.37},{"source":"311119/US","target":"112A00/US","value":0.184},{"source":"311210/US","target":"311230/US","value":0.297},{"source":"311210/US","target":"311300/US","value":0.127},{"source":"311210/US","target":"311800/US","value":0.141},{"source":"311210/US","target":"312120/US","value":0.127},{"source":"311221/US","target":"311119/US","value":0.133},{"source":"311400/US","target":"311940/US","value":0.131},{"source":"311500/US","target":"311300/US","value":0.129},{"source":"311500/US","target":"311600/US","value":0.286},{"source":"311600/US","target":"311110/US","value":0.139},{"source":"311700/US","target":"311940/US","value":0.144},{"source":"311910/US","target":"311230/US","value":0.168},{"source":"312110/US","target":"3119A0/US","value":0.14},{"source":"312110/US","target":"3119B0/US","value":0.132},{"source":"312200/US","target":"111900/US","value":0.299},{"source":"313100/US","target":"313200/US","value":0.318},{"source":"313100/US","target":"31499A/US","value":0.153},{"source":"313200/US","target":"314110/US","value":0.34},{"source":"313200/US","target":"316000/US","value":0.127},{"source":"322100/US","target":"322210/US","value":0.336},{"source":"322100/US","target":"32222A/US","value":0.257},{"source":"322100/US","target":"32222B/US","value":0.283},{"source":"322100/US","target":"322230/US","value":0.217},{"source":"322100/US","target":"322291/US","value":0.327},{"source":"322210/US","target":"322A00/US","value":0.298},{"source":"322291/US","target":"322A00/US","value":0.13},{"source":"323100/US","target":"322A00/US","value":0.134},{"source":"324110/US","target":"324199/US","value":0.328},{"source":"325190/US","target":"325400/US","value":0.127},{"source":"325190/US","target":"325500/US","value":0.142},{"source":"325190/US","target":"325600/US","value":0.131},{"source":"325211/US","target":"326200/US","value":0.133},{"source":"325212/US","target":"326200/US","value":0.147},{"source":"327200/US","target":"327100/US","value":0.121},{"source":"331110/US","target":"331313/US","value":0.126},{"source":"331313/US","target":"33131B/US","value":0.298},{"source":"331410/US","target":"33131B/US","value":0.131},{"source":"332310/US","target":"332320/US","value":0.207},{"source":"332310/US","target":"3324A0/US","value":0.131},{"source":"332800/US","target":"332910/US","value":0.122},{"source":"332800/US","target":"33299A/US","value":0.176},{"source":"332910/US","target":"333920/US","value":0.126},{"source":"484000/US","target":"336120/US","value":0.136},{"source":"517110/US","target":"517A00/US","value":0.152},{"source":"5241XX/US","target":"5241XX/US","value":0.469},{"source":"5241XX/US","target":"524100/US","value":0.269},{"source":"52A000/US","target":"525000/US","value":0.356},{"source":"523000/US","target":"525000/US","value":0.134},{"source":"531HST/US","target":"5241XX/US","value":0.141},{"source":"550000/US","target":"531HST/US","value":0.132},{"source":"56290A/US","target":"56290A/US","value":0.355},{"source":"812100/US","target":"812200/US","value":0.138},{"source":"812200/US","target":"812100/US","value":0.149},{"source":"8123A0/US","target":"813A00/US","value":0.131},{"source":"813A00/US","target":"813B00/US","value":0.209},{"source":"325110/US","target":"325920/US","value":0.159},{"source":"332710/US","target":"333112/US","value":0.13},{"source":"111200/US","target":"311940/US","value":0.134},{"source":"111300/US","target":"311940/US","value":0.134},{"source":"111300/US","target":"3119A0/US","value":0.135},{"source":"111900/US","target":"3119B0/US","value":0.13},{"source":"322100/US","target":"323100/US","value":0.177},{"source":"311500/US","target":"311110/US","value":0.156},{"source":"311500/US","target":"311940/US","value":0.145},{"source":"325190/US","target":"325920/US","value":0.132},{"source":"31161A/US","target":"311119/US","value":0.147},{"source":"2122A0/US","target":"331410/US","value":0.123},{"source":"339112/US","target":"339113/US","value":0.22},{"source":"325110/US","target":"325320/US","value":0.137}]};
+
+        // State
+        let showLabels = true;
+        let physicsEnabled = true;
+        let selectedSector = null;
+
+        // Set up SVG
+        const container = document.getElementById('container');
+        const svg = d3.select('#graph');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        svg.attr('width', width).attr('height', height);
+
+        // Create groups for links and nodes
+        const g = svg.append('g');
+        const linksGroup = g.append('g').attr('class', 'links');
+        const nodesGroup = g.append('g').attr('class', 'nodes');
+
+        // Zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.2, 5])
+            .on('zoom', (event) => {
+                g.attr('transform', event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Update stats
+        document.getElementById('node-count').textContent = graphData.nodes.length;
+        document.getElementById('link-count').textContent = graphData.links.length;
+
+        // Create legend
+        const sectors = [...new Set(graphData.nodes.map(n => n.sector))].sort();
+        const sectorColors = {};
+        graphData.nodes.forEach(n => sectorColors[n.sector] = n.color);
+
+        const legend = d3.select('#legend');
+        legend.append('h3').text('Sectors');
+
+        sectors.forEach(sector => {
+            const item = legend.append('div')
+                .attr('class', 'legend-item')
+                .attr('data-sector', sector)
+                .on('click', () => toggleSector(sector));
+
+            item.append('div')
+                .attr('class', 'legend-color')
+                .style('background', sectorColors[sector]);
+
+            item.append('span').text(sector);
+        });
+
+        // Force simulation
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(80).strength(0.5))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.output) * 2 + 10));
+
+        // Create links
+        const link = linksGroup.selectAll('path')
+            .data(graphData.links)
+            .join('path')
+            .attr('class', 'link')
+            .attr('stroke', '#666')
+            .attr('stroke-width', d => Math.sqrt(d.value) * 5);
+
+        // Create nodes
+        const node = nodesGroup.selectAll('g')
+            .data(graphData.nodes)
+            .join('g')
+            .attr('class', 'node')
+            .call(d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended));
+
+        node.append('circle')
+            .attr('r', d => Math.sqrt(d.output) * 1.8 + 5)
+            .attr('fill', d => d.color);
+
+        node.append('text')
+            .attr('class', 'node-label')
+            .attr('dx', d => Math.sqrt(d.output) * 1.8 + 8)
+            .attr('dy', 4)
+            .text(d => d.name.substring(0, 25));
+
+        // Tooltip
+        const tooltip = d3.select('#tooltip');
+
+        node.on('mouseover', (event, d) => {
+            // Highlight connected nodes
+            const connectedNodeIds = new Set();
+            graphData.links.forEach(l => {
+                if (l.source.id === d.id) connectedNodeIds.add(l.target.id);
+                if (l.target.id === d.id) connectedNodeIds.add(l.source.id);
+            });
+            connectedNodeIds.add(d.id);
+
+            node.classed('dimmed', n => !connectedNodeIds.has(n.id));
+            link.classed('highlighted', l => l.source.id === d.id || l.target.id === d.id);
+            link.classed('dimmed', l => l.source.id !== d.id && l.target.id !== d.id);
+
+            // Count connections
+            const inbound = graphData.links.filter(l => l.target.id === d.id).length;
+            const outbound = graphData.links.filter(l => l.source.id === d.id).length;
+
+            tooltip.html(`
+                <div class="tooltip-title">${d.name}</div>
+                <div class="tooltip-sector" style="background: ${d.color}20; color: ${d.color}">${d.sector}</div>
+                <div class="tooltip-stats">
+                    <div class="tooltip-stat">
+                        <span class="tooltip-stat-label">Output</span>
+                        <span class="tooltip-stat-value">$${d.output.toFixed(1)}B</span>
+                    </div>
+                    <div class="tooltip-stat">
+                        <span class="tooltip-stat-label">Inbound links</span>
+                        <span class="tooltip-stat-value">${inbound}</span>
+                    </div>
+                    <div class="tooltip-stat">
+                        <span class="tooltip-stat-label">Outbound links</span>
+                        <span class="tooltip-stat-value">${outbound}</span>
+                    </div>
+                </div>
+            `);
+            tooltip.classed('visible', true);
+        })
+        .on('mousemove', (event) => {
+            tooltip
+                .style('left', (event.pageX + 15) + 'px')
+                .style('top', (event.pageY - 10) + 'px');
+        })
+        .on('mouseout', () => {
+            node.classed('dimmed', false);
+            link.classed('highlighted', false);
+            link.classed('dimmed', false);
+            tooltip.classed('visible', false);
+        });
+
+        // Curved links
+        function linkArc(d) {
+            const dx = d.target.x - d.source.x;
+            const dy = d.target.y - d.source.y;
+            const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
+            return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+        }
+
+        // Update simulation
+        simulation.on('tick', () => {
+            link.attr('d', linkArc);
+            node.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            if (physicsEnabled) {
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+
+        // Toggle sector filter
+        function toggleSector(sector) {
+            if (selectedSector === sector) {
+                selectedSector = null;
+                d3.selectAll('.legend-item').classed('dimmed', false);
+                node.classed('dimmed', false);
+                link.classed('dimmed', false);
+            } else {
+                selectedSector = sector;
+                d3.selectAll('.legend-item').classed('dimmed', d => d !== sector);
+                d3.selectAll(`.legend-item[data-sector="${sector}"]`).classed('dimmed', false);
+                
+                const sectorNodeIds = new Set(graphData.nodes.filter(n => n.sector === sector).map(n => n.id));
+                node.classed('dimmed', n => !sectorNodeIds.has(n.id));
+                link.classed('dimmed', l => !sectorNodeIds.has(l.source.id) && !sectorNodeIds.has(l.target.id));
+            }
+        }
+
+        // Control buttons
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+            selectedSector = null;
+            d3.selectAll('.legend-item').classed('dimmed', false);
+            node.classed('dimmed', false);
+            link.classed('dimmed', false);
+        });
+
+        document.getElementById('toggle-labels').addEventListener('click', () => {
+            showLabels = !showLabels;
+            node.selectAll('text').style('opacity', showLabels ? 1 : 0);
+        });
+
+        document.getElementById('toggle-physics').addEventListener('click', () => {
+            physicsEnabled = !physicsEnabled;
+            if (physicsEnabled) {
+                graphData.nodes.forEach(d => { d.fx = null; d.fy = null; });
+                simulation.alpha(0.3).restart();
+            } else {
+                simulation.stop();
+            }
+        });
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            svg.attr('width', newWidth).attr('height', newHeight);
+            simulation.force('center', d3.forceCenter(newWidth / 2, newHeight / 2));
+            simulation.alpha(0.3).restart();
+        });
+    </script>
+</body>
+</html>

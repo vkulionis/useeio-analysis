@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USEEIO Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: #fff;
+            color: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 360px;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            background: #fafafa;
+            border: 1px solid #e5e5e5;
+            color: #1a1a1a;
+            padding: 12px 14px;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        input[type="password"]:focus {
+            border-color: #1a1a1a;
+        }
+
+        button {
+            width: 100%;
+            background: #1a1a1a;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+
+        .nav-links {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e5e5;
+            display: none;
+        }
+
+        .nav-links.visible {
+            display: block;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 12px 0;
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .nav-links a:hover {
+            color: #666;
+        }
+
+        .nav-links a span {
+            font-size: 0.75rem;
+            color: #888;
+            display: block;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div id="login-form">
+            <h1>USEEIO Analysis</h1>
+            <p>Enter password to access the economic analysis dashboard.</p>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" autofocus>
+            </div>
+            
+            <button onclick="checkPassword()">Access Dashboard</button>
+            <div class="error" id="error">Incorrect password. Please try again.</div>
+        </div>
+
+        <div class="nav-links" id="nav-links">
+            <h1>Welcome</h1>
+            <p>Select a dashboard to explore.</p>
+            
+            <a href="linkages.html">
+                Linkages & Shock Analysis
+                <span>Forward/backward linkages, demand shocks, cost propagation</span>
+            </a>
+            <a href="network_full.html">
+                Industry Network Graph
+                <span>Interactive visualization of 411 industry connections</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simple hash function for basic protection
+        // NOTE: This is NOT secure - password can be found in source code
+        // Use StaticCrypt for real security
+        
+        const CORRECT_HASH = '5e884898da28047d5e8'; // Hash of "password" - change this!
+        
+        // Simple hash (for demo - replace with your own logic)
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        // Check if already authenticated this session
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            showDashboard();
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            
+            // Simple check - replace with your password
+            if (password === 'useeio2024') {
+                sessionStorage.setItem('authenticated', 'true');
+                showDashboard();
+            } else {
+                document.getElementById('error').classList.add('visible');
+                document.getElementById('password').value = '';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('nav-links').classList.add('visible');
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>
