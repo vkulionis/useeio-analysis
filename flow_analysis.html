@@ -70,63 +70,61 @@
             overflow: hidden;
         }
 
-        .header {
+        .app-header {
+            background: #fff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 32px;
-            border-bottom: 1px solid var(--border-default);
-            background: var(--bg-primary);
             flex-shrink: 0;
         }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
-
-        .logo {
+        .app-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: #1a1a1a;
         }
-
-        .badge-beta {
-            display: inline-block;
-            padding: 2px 8px;
-            background: var(--color-warning-bg);
-            color: var(--color-warning);
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            border-radius: 2px;
-            margin-left: 8px;
-        }
-
-        .tabs {
+        .nav-tabs {
             display: flex;
-            gap: 0;
+            gap: 4px;
         }
-
-        .tab {
+        .nav-tab {
             padding: 8px 16px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 500;
-            color: var(--text-muted);
-            text-decoration: none;
-            border-bottom: 2px solid transparent;
+            color: #666;
+            cursor: pointer;
             transition: all 0.15s;
+            border-bottom: 2px solid transparent;
         }
-
-        .tab:hover {
-            color: var(--text-primary);
+        .nav-tab:hover { color: #1a1a1a; }
+        .nav-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+        .nav-tab a { color: inherit; text-decoration: none; }
+        
+        /* Dropdown */
+        .nav-dropdown { position: relative; }
+        .nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 160px;
+            padding: 4px 0;
+            margin-top: 4px;
         }
-
-        .tab.active {
-            color: var(--text-primary);
-            border-bottom-color: var(--text-primary);
+        .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+        .nav-dropdown-item {
+            display: block;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            color: #666;
+            text-decoration: none;
         }
+        .nav-dropdown-item:hover { background: #f5f5f5; color: #1a1a1a; }
 
         .main-content {
             display: flex;
@@ -727,184 +725,195 @@
             padding: 0 2px;
             border-radius: 2px;
         }
+
+        /* Settings Panel - similar to network page */
+        .settings-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+            font-family: var(--font-sans);
+        }
+
+        .settings-toggle:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-dark);
+            color: var(--text-primary);
+        }
+
+        .settings-toggle .icon {
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .settings-toggle.open .icon {
+            transform: rotate(90deg);
+        }
+
+        .settings-panel {
+            position: absolute;
+            top: 56px;
+            right: 16px;
+            width: 360px;
+            max-height: calc(100% - 72px);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            pointer-events: auto;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            z-index: 99;
+        }
+
+        .settings-panel.open {
+            display: flex;
+        }
+
+        .settings-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+
+        .settings-panel-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-panel-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .settings-panel-close:hover {
+            color: var(--text-primary);
+        }
+
+        .settings-panel-content {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .settings-section {
+            margin-bottom: 16px;
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .settings-btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .settings-btn {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-sans);
+        }
+
+        .settings-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-dark);
+        }
+
+        .settings-btn.active {
+            background: var(--text-primary);
+            border-color: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .settings-export-btn {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-sans);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .settings-export-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-left">
-                <div class="logo">
-                    USEEIO Analysis
-                    <span class="badge-beta">Flow Beta</span>
+        <header class="app-header">
+            <nav class="nav-tabs">
+                <div class="nav-tab"><a href="network_full.html">Network</a></div>
+                <div class="nav-tab nav-dropdown">
+                    <a href="linkages.html">Linkages ▾</a>
+                    <div class="nav-dropdown-menu">
+                        <a href="linkages.html#linkages" class="nav-dropdown-item">Linkages</a>
+                        <a href="linkages.html#shock" class="nav-dropdown-item">Shock Analysis</a>
+                        <a href="linkages.html#circularity" class="nav-dropdown-item">Circularity</a>
+                    </div>
                 </div>
-                <nav class="tabs">
-                    <a href="network_full.html" class="tab">Network</a>
-                    <a href="linkages.html" class="tab">Linkages</a>
-                    <a href="flow_analysis.html" class="tab active">Flow</a>
-                </nav>
-            </div>
+                <div class="nav-tab active">Flow</div>
+            </nav>
         </header>
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Sidebar -->
-            <div class="sidebar-wrapper">
-                <aside class="sidebar" id="sidebar">
-                    <div class="sidebar-section">
-                    <div class="section-label">Flow Type</div>
-                    <div class="select-wrapper">
-                        <select id="flow-type-select" class="input" aria-label="Select flow type">
-                            <option value="dollars">💵 Dollar Flows</option>
-                            <optgroup label="Environmental">
-                                <option value="GHG">🌡️ Greenhouse Gases (CO2 eq)</option>
-                                <option value="ENRG">⚡ Energy Use</option>
-                                <option value="WATR">💧 Water Use</option>
-                                <option value="LAND">🌍 Land Use</option>
-                                <option value="SMOG">🌫️ Smog Formation</option>
-                                <option value="ACID">☁️ Acidification</option>
-                            </optgroup>
-                            <optgroup label="Economic & Social">
-                                <option value="VADD">💰 Value Added</option>
-                                <option value="JOBS">👥 Jobs Supported</option>
-                            </optgroup>
-                            <optgroup label="Waste">
-                                <option value="CMSW">🗑️ Municipal Solid Waste</option>
-                                <option value="CCDD">🏗️ Construction Debris</option>
-                                <option value="CRHW">☢️ Hazardous Waste</option>
-                            </optgroup>
-                            <optgroup label="Health">
-                                <option value="HRSP">😷 Respiratory Effects</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    
-                    <!-- Normalization Toggle -->
-                    <div style="margin-top: 12px;">
-                        <div class="section-label" style="margin-bottom: 8px;">Normalization</div>
-                        <div class="toggle-group" id="normalization-toggle">
-                            <button class="toggle-btn active" data-mode="absolute" aria-pressed="true">
-                                Absolute
-                            </button>
-                            <button class="toggle-btn" data-mode="per-dollar" aria-pressed="false">
-                                Per $1B Output
-                            </button>
-                        </div>
-                        <div class="toggle-hint" id="normalization-hint">
-                            Total flows in selected unit
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="section-label">Target Sector Selection</div>
-                    <div class="select-wrapper">
-                        <select id="sector-select" class="input" aria-label="Select target sector">
-                            <option value="">Select a sector...</option>
-                        </select>
-                    </div>
-                    
-                    <div style="margin-top: 12px;">
-                        <input type="text" id="sector-search" class="input" placeholder="Search industries..." aria-label="Search industries">
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="section-label">Target Sector Metrics</div>
-                    <div class="metrics-grid" id="metrics-panel">
-                        <!-- Row 1: Total Output / Direct Factor -->
-                        <div class="metric-card full-width">
-                            <div class="metric-label" id="metric-output-label">Total Output</div>
-                            <div class="metric-value" id="metric-output">—</div>
-                            <div class="metric-detail" id="metric-output-unit">Billion USD</div>
-                        </div>
-                        
-                        <!-- Row 2: Input side accounting -->
-                        <div class="metric-card">
-                            <div class="metric-label" id="metric-inputs-label">Intermediate Inputs</div>
-                            <div class="metric-value info" id="metric-inputs">—</div>
-                            <div class="metric-detail">from suppliers</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label" id="metric-va-label">Value Added</div>
-                            <div class="metric-value positive" id="metric-va">—</div>
-                            <div class="metric-detail">generated here</div>
-                        </div>
-                        
-                        <!-- Row 3: Output side accounting -->
-                        <div class="metric-card">
-                            <div class="metric-label">To Intermediates</div>
-                            <div class="metric-value warning" id="metric-intermediate">—</div>
-                            <div class="metric-detail">other sectors</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">To Final Demand</div>
-                            <div class="metric-value positive" id="metric-final">—</div>
-                            <div class="metric-detail">consumers/exports</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Balance verification -->
-                    <div class="equations-panel" style="margin-top: 12px; padding: 10px 12px;">
-                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">IO Balance Check</div>
-                        <div id="balance-check" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-subtle);">
-                            Inputs + VA = Output = Sales + FD
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="section-label">Methodology (Hertwich et al. 2024)</div>
-                    <div class="equations-panel">
-                        <div class="equation input">
-                            <div class="equation-label">Inputs from sector i</div>
-                            z<sub>it</sub> = A<sub>it</sub> × x<sub>t</sub>
-                        </div>
-                        <div class="equation direct">
-                            <div class="equation-label">Direct Final Demand</div>
-                            y<sub>t</sub> = final demand for target
-                        </div>
-                        <div class="equation output">
-                            <div class="equation-label">Intermediate Output to j</div>
-                            z<sub>tj</sub> = A<sub>tj</sub> × x<sub>j</sub>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="section-label">Top Input Flows</div>
-                    <div class="flow-list" id="input-flows">
-                        <div class="empty-state" style="padding: 20px;">
-                            <div style="font-size: 0.8rem; color: var(--text-subtle);">Select a target sector</div>
-                        </div>
-                    </div>
-                </div>
-                </aside>
-                <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
-                    <span class="toggle-icon">◀</span>
-                </button>
-            </div>
-
-            <!-- Visualization -->
             <div class="viz-container">
-                <div class="viz-header">
-                    <div class="viz-title" id="viz-title">Sector Flow Analysis</div>
-                    <div class="viz-controls">
-                        <button class="btn" id="btn-show-all" aria-label="Show all flows">
-                            Show All
-                        </button>
-                        <button class="btn active" id="btn-top-flows" aria-label="Show top flows only">
-                            Top 10 Flows
-                        </button>
-                        <button class="btn" id="btn-reset-expand" aria-label="Reset expansion" title="Collapse all expanded items" style="display: none;">
-                            ↺ Reset
-                        </button>
-                        <button class="btn" id="btn-export" aria-label="Export data">
-                            Export
-                        </button>
-                    </div>
-                </div>
-
                 <div class="viz-canvas" id="viz-canvas">
                     <svg id="sankey-chart"></svg>
                     <div class="empty-state" id="empty-state">
@@ -914,24 +923,187 @@
                             Choose an industry from the dropdown to visualize its input-output flow structure based on the Hypothetical Extraction Method.
                         </div>
                     </div>
-                </div>
 
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: var(--flow-input);"></div>
-                        <span>Intermediate Inputs</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #16a34a;"></div>
-                        <span>Value Added / Direct Factor</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: var(--flow-output-direct);"></div>
-                        <span>Final Demand</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: var(--flow-output-intermediate);"></div>
-                        <span>Intermediate Sales</span>
+                    <!-- Settings Toggle Button -->
+                    <button class="settings-toggle" id="settings-toggle">
+                        <span class="icon">⚙</span>
+                        <span>Settings</span>
+                    </button>
+
+                    <!-- Settings Panel -->
+                    <div class="settings-panel" id="settings-panel">
+                        <div class="settings-panel-header">
+                            <span class="settings-panel-title">Settings</span>
+                            <button class="settings-panel-close" id="settings-close">×</button>
+                        </div>
+                        <div class="settings-panel-content">
+                            <div class="settings-section">
+                                <div class="settings-section-label">Flow Type</div>
+                                <div class="select-wrapper">
+                                    <select id="flow-type-select" class="input" aria-label="Select flow type">
+                                        <option value="dollars">💵 Dollar Flows</option>
+                                        <optgroup label="Environmental">
+                                            <option value="GHG">🌡️ Greenhouse Gases (CO2 eq)</option>
+                                            <option value="ENRG">⚡ Energy Use</option>
+                                            <option value="WATR">💧 Water Use</option>
+                                            <option value="LAND">🌍 Land Use</option>
+                                            <option value="SMOG">🌫️ Smog Formation</option>
+                                            <option value="ACID">☁️ Acidification</option>
+                                        </optgroup>
+                                        <optgroup label="Economic & Social">
+                                            <option value="VADD">💰 Value Added</option>
+                                            <option value="JOBS">👥 Jobs Supported</option>
+                                        </optgroup>
+                                        <optgroup label="Waste">
+                                            <option value="CMSW">🗑️ Municipal Solid Waste</option>
+                                            <option value="CCDD">🏗️ Construction Debris</option>
+                                            <option value="CRHW">☢️ Hazardous Waste</option>
+                                        </optgroup>
+                                        <optgroup label="Health">
+                                            <option value="HRSP">😷 Respiratory Effects</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div style="margin-top: 12px;">
+                                    <div class="settings-section-label" style="margin-bottom: 8px;">Normalization</div>
+                                    <div class="toggle-group" id="normalization-toggle">
+                                        <button class="toggle-btn active" data-mode="absolute" aria-pressed="true">
+                                            Absolute
+                                        </button>
+                                        <button class="toggle-btn" data-mode="per-dollar" aria-pressed="false">
+                                            Per $1B Output
+                                        </button>
+                                    </div>
+                                    <div class="toggle-hint" id="normalization-hint">
+                                        Total flows in selected unit
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Target Sector</div>
+                                <div class="select-wrapper">
+                                    <select id="sector-select" class="input" aria-label="Select target sector">
+                                        <option value="">Select a sector...</option>
+                                    </select>
+                                </div>
+                                <div style="margin-top: 12px;">
+                                    <input type="text" id="sector-search" class="input" placeholder="Search industries..." aria-label="Search industries">
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Metrics</div>
+                                <div class="metrics-grid" id="metrics-panel">
+                                    <div class="metric-card full-width">
+                                        <div class="metric-label" id="metric-output-label">Total Output</div>
+                                        <div class="metric-value" id="metric-output">—</div>
+                                        <div class="metric-detail" id="metric-output-unit">Billion USD</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label" id="metric-inputs-label">Intermediate Inputs</div>
+                                        <div class="metric-value info" id="metric-inputs">—</div>
+                                        <div class="metric-detail">from suppliers</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label" id="metric-va-label">Value Added</div>
+                                        <div class="metric-value positive" id="metric-va">—</div>
+                                        <div class="metric-detail">generated here</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">To Intermediates</div>
+                                        <div class="metric-value warning" id="metric-intermediate">—</div>
+                                        <div class="metric-detail">other sectors</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">To Final Demand</div>
+                                        <div class="metric-value positive" id="metric-final">—</div>
+                                        <div class="metric-detail">consumers/exports</div>
+                                    </div>
+                                </div>
+                                <div class="equations-panel" style="margin-top: 12px; padding: 10px 12px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">IO Balance Check</div>
+                                    <div id="balance-check" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-subtle);">
+                                        Inputs + VA = Output = Sales + FD
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Methodology (Hertwich et al. 2024)</div>
+                                <div class="equations-panel">
+                                    <div class="equation input">
+                                        <div class="equation-label">Inputs from sector i</div>
+                                        z<sub>it</sub> = A<sub>it</sub> × x<sub>t</sub>
+                                    </div>
+                                    <div class="equation direct">
+                                        <div class="equation-label">Direct Final Demand</div>
+                                        y<sub>t</sub> = final demand for target
+                                    </div>
+                                    <div class="equation output">
+                                        <div class="equation-label">Intermediate Output to j</div>
+                                        z<sub>tj</sub> = A<sub>tj</sub> × x<sub>j</sub>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Top Input Flows</div>
+                                <div class="flow-list" id="input-flows">
+                                    <div class="empty-state" style="padding: 20px;">
+                                        <div style="font-size: 0.8rem; color: var(--text-subtle);">Select a target sector</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Flow Display</div>
+                                <div class="settings-btn-group">
+                                    <button class="settings-btn" id="btn-show-all" aria-label="Show all flows">
+                                        Show All
+                                    </button>
+                                    <button class="settings-btn active" id="btn-top-flows" aria-label="Show top flows only">
+                                        Top 10
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="settings-section" id="reset-section" style="display: none;">
+                                <div class="settings-section-label">Expansion</div>
+                                <button class="settings-btn" id="btn-reset-expand" aria-label="Reset expansion" style="width: 100%;">
+                                    ↺ Reset All
+                                </button>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Legend</div>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem;">
+                                        <div class="legend-color" style="width: 12px; height: 12px; border-radius: 2px; background: var(--flow-input);"></div>
+                                        <span>Intermediate Inputs</span>
+                                    </div>
+                                    <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem;">
+                                        <div style="width: 12px; height: 12px; border-radius: 2px; background: #16a34a;"></div>
+                                        <span>Value Added / Direct</span>
+                                    </div>
+                                    <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem;">
+                                        <div class="legend-color" style="width: 12px; height: 12px; border-radius: 2px; background: var(--flow-output-direct);"></div>
+                                        <span>Final Demand</span>
+                                    </div>
+                                    <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem;">
+                                        <div style="width: 12px; height: 12px; border-radius: 2px; background: var(--flow-output-intermediate);"></div>
+                                        <span>Intermediate Sales</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <div class="settings-section-label">Export</div>
+                                <button class="settings-export-btn" id="btn-export" aria-label="Export data">
+                                    📥 Export Data
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -954,7 +1126,6 @@
         let currentFlowType = 'dollars';
         let showTopFlowsOnly = true;
         let normalizationMode = 'absolute'; // 'absolute' or 'per-dollar'
-        let sidebarCollapsed = false;
         const TOP_FLOWS_COUNT = 10;
         const EXPANSION_INCREMENT = 5; // How many items to show when expanding
         
@@ -1768,9 +1939,9 @@
                 outputExpansionLevels.push({ count: EXPANSION_INCREMENT });
             }
             
-            // Show reset button if anything is expanded
+            // Show reset section if anything is expanded
             if (inputExpansionLevels.length > 0 || outputExpansionLevels.length > 0) {
-                document.getElementById('btn-reset-expand').style.display = 'inline-flex';
+                document.getElementById('reset-section').style.display = 'block';
             }
             
             updateVisualization();
@@ -2032,12 +2203,13 @@
 
         function updateVisualization() {
             const indicatorName = indicatorMetadata[currentFlowType]?.name || 'Dollar Flows';
+            const titleEl = document.getElementById('viz-title');
             
             if (selectedSector === null) {
                 updateMetrics(null);
                 updateFlowList(null);
                 renderSankey(null);
-                document.getElementById('viz-title').textContent = `${indicatorName} Flow Analysis`;
+                if (titleEl) titleEl.textContent = `${indicatorName} Flow Analysis`;
                 return;
             }
             
@@ -2047,7 +2219,7 @@
             
             if (analysis) {
                 const normLabel = normalizationMode === 'per-dollar' ? ' (per $1B output)' : '';
-                document.getElementById('viz-title').textContent = `${indicatorName}: ${analysis.target.name}${normLabel}`;
+                if (titleEl) titleEl.textContent = `${indicatorName}: ${analysis.target.name}${normLabel}`;
                 updateMetrics(analysis);
                 updateFlowList(analysis);
                 renderSankey(analysis);
@@ -2073,7 +2245,7 @@
                 currentFlowType = e.target.value;
                 inputExpansionLevels = [];  // Reset expansion when changing flow type
                 outputExpansionLevels = [];
-                document.getElementById('btn-reset-expand').style.display = 'none';
+                document.getElementById('reset-section').style.display = 'none';
                 updateIndicatorColor();
                 updateVisualization();
                 updateLegendColors();
@@ -2105,30 +2277,19 @@
                 });
             });
 
-            // Sidebar toggle
-            document.getElementById('sidebar-toggle').addEventListener('click', () => {
-                sidebarCollapsed = !sidebarCollapsed;
-                const sidebar = document.getElementById('sidebar');
-                const toggleIcon = document.querySelector('.sidebar-toggle .toggle-icon');
-                const toggleBtn = document.getElementById('sidebar-toggle');
-                
-                if (sidebarCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    toggleIcon.style.transform = 'rotate(180deg)';
-                    toggleBtn.title = 'Show sidebar';
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    toggleIcon.style.transform = 'rotate(0deg)';
-                    toggleBtn.title = 'Hide sidebar';
-                }
-                
-                // Re-render Sankey after transition
-                setTimeout(() => {
-                    if (selectedSector !== null) {
-                        const analysis = analyzeFlows(selectedSector);
-                        if (analysis) renderSankey(analysis);
-                    }
-                }, 300);
+            // Settings panel toggle
+            const settingsToggle = document.getElementById('settings-toggle');
+            const settingsPanel = document.getElementById('settings-panel');
+            const settingsClose = document.getElementById('settings-close');
+
+            settingsToggle.addEventListener('click', () => {
+                settingsPanel.classList.toggle('open');
+                settingsToggle.classList.toggle('open');
+            });
+
+            settingsClose.addEventListener('click', () => {
+                settingsPanel.classList.remove('open');
+                settingsToggle.classList.remove('open');
             });
 
             // Sector select
@@ -2136,7 +2297,7 @@
                 selectedSector = e.target.value ? parseInt(e.target.value) : null;
                 inputExpansionLevels = [];  // Reset expansion when changing sector
                 outputExpansionLevels = [];
-                document.getElementById('btn-reset-expand').style.display = 'none';
+                document.getElementById('reset-section').style.display = 'none';
                 updateVisualization();
             });
 
@@ -2161,7 +2322,7 @@
                 outputExpansionLevels = [];
                 document.getElementById('btn-show-all').classList.add('active');
                 document.getElementById('btn-top-flows').classList.remove('active');
-                document.getElementById('btn-reset-expand').style.display = 'none';
+                document.getElementById('reset-section').style.display = 'none';
                 updateVisualization();
             });
 
@@ -2171,7 +2332,7 @@
                 outputExpansionLevels = [];
                 document.getElementById('btn-top-flows').classList.add('active');
                 document.getElementById('btn-show-all').classList.remove('active');
-                document.getElementById('btn-reset-expand').style.display = 'none';
+                document.getElementById('reset-section').style.display = 'none';
                 updateVisualization();
             });
 
@@ -2179,7 +2340,7 @@
             document.getElementById('btn-reset-expand').addEventListener('click', () => {
                 inputExpansionLevels = [];
                 outputExpansionLevels = [];
-                document.getElementById('btn-reset-expand').style.display = 'none';
+                document.getElementById('reset-section').style.display = 'none';
                 updateVisualization();
             });
 
