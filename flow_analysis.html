@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Analysis (Beta) | USEEIO</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Backgrounds */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f0f0f0;
+            
+            /* Borders */
+            --border-light: #f0f0f0;
+            --border-default: #e5e5e5;
+            --border-dark: #d0d0d0;
+            
+            /* Text */
+            --text-primary: #1a1a1a;
+            --text-secondary: #444444;
+            --text-muted: #666666;
+            --text-subtle: #888888;
+            --text-disabled: #aaaaaa;
+            
+            /* Semantic */
+            --color-positive: #16a34a;
+            --color-positive-bg: #f0fdf4;
+            --color-negative: #dc2626;
+            --color-negative-bg: #fef2f2;
+            --color-warning: #ea580c;
+            --color-warning-bg: #fff7ed;
+            --color-info: #2563eb;
+            --color-info-bg: #eff6ff;
+            
+            /* Flow Colors - Dynamic based on selected indicator */
+            --flow-input: #2563eb;
+            --flow-output-direct: #16a34a;
+            --flow-output-intermediate: #ea580c;
+            --indicator-color: #2563eb;
+            
+            /* Typography */
+            --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-primary);
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .badge-beta {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--color-warning-bg);
+            color: var(--color-warning);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-radius: 2px;
+            margin-left: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--text-primary);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Sidebar */
+        .sidebar-wrapper {
+            display: flex;
+            flex-shrink: 0;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            flex-shrink: 0;
+            transition: width 0.25s ease, min-width 0.25s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            min-width: 0;
+            border-right: none;
+        }
+
+        .sidebar-toggle {
+            width: 24px;
+            background: var(--bg-secondary);
+            border: none;
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .sidebar-toggle .toggle-icon {
+            display: inline-block;
+            transition: transform 0.25s ease;
+        }
+        
+        .sidebar-toggle:active {
+            background: var(--border-default);
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: var(--font-sans);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .input:focus {
+            border-color: var(--text-primary);
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        select.input {
+            appearance: none;
+            cursor: pointer;
+            padding-right: 32px;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            padding: 12px;
+        }
+
+        .metric-card.full-width {
+            grid-column: span 2;
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            line-height: 1.2;
+        }
+
+        .metric-value.positive { color: var(--color-positive); }
+        .metric-value.negative { color: var(--color-negative); }
+        .metric-value.warning { color: var(--color-warning); }
+        .metric-value.info { color: var(--color-info); }
+
+        .metric-detail {
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+            margin-top: 2px;
+        }
+
+        /* Flow List */
+        .flow-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .flow-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .flow-item.input-flow {
+            border-left-color: var(--flow-input);
+        }
+
+        .flow-item.output-flow {
+            border-left-color: var(--flow-output-intermediate);
+        }
+
+        .flow-item.selected {
+            background: var(--bg-tertiary);
+        }
+
+        .flow-item-name {
+            flex: 1;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .flow-item-value {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .flow-item-bar {
+            width: 60px;
+            height: 4px;
+            background: var(--border-default);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .flow-item-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .flow-item-bar-fill.input { background: var(--flow-input); }
+        .flow-item-bar-fill.output { background: var(--flow-output-intermediate); }
+
+        /* Toggle Group */
+        .toggle-group {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            font-family: var(--font-sans);
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .toggle-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .toggle-btn.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .toggle-hint {
+            margin-top: 6px;
+            font-size: 0.65rem;
+            color: var(--text-subtle);
+        }
+
+        /* Visualization Area */
+        .viz-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .viz-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .viz-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .viz-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            border: 1px solid var(--border-default);
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+        }
+
+        .viz-canvas {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        #sankey-chart {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Sankey Styles */
+        .sankey-node rect {
+            fill-opacity: 0.9;
+            stroke-width: 0;
+            cursor: pointer;
+            transition: fill-opacity 0.15s;
+        }
+
+        .sankey-node rect:hover {
+            fill-opacity: 1;
+        }
+
+        .sankey-node.target rect {
+            stroke: var(--text-primary);
+            stroke-width: 2px;
+        }
+
+        .sankey-node.expandable rect {
+            cursor: pointer;
+            stroke: var(--text-muted);
+            stroke-width: 1px;
+            stroke-dasharray: 4 2;
+        }
+
+        .sankey-node.expandable:hover rect {
+            fill-opacity: 1;
+            stroke: var(--text-primary);
+        }
+
+        .sankey-node.expandable text {
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .sankey-node.expandable .expand-hint {
+            font-size: 9px;
+            fill: var(--color-info);
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+
+        .sankey-node.expandable:hover .expand-hint {
+            opacity: 1;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .sankey-node.expandable rect {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .sankey-node.expandable:hover rect {
+            animation: none;
+        }
+
+        .sankey-node text {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            fill: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .sankey-link {
+            fill: none;
+            stroke-opacity: 0.3;
+            transition: stroke-opacity 0.15s;
+        }
+
+        .sankey-link:hover {
+            stroke-opacity: 0.6;
+        }
+
+        .sankey-link.highlighted {
+            stroke-opacity: 0.7;
+        }
+
+        .sankey-link.dimmed {
+            stroke-opacity: 0.05;
+        }
+
+        /* Column Labels */
+        .column-label {
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            fill: var(--text-muted);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            pointer-events: none;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            max-width: 320px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.1s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-label {
+            color: var(--text-muted);
+        }
+
+        .tooltip-value {
+            font-family: var(--font-mono);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-subtle);
+            text-align: center;
+            padding: 40px;
+        }
+        
+        /* Empty state specifically for viz-canvas */
+        .viz-canvas > .empty-state {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-text {
+            font-size: 0.85rem;
+            max-width: 320px;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 12px 24px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-default);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Equations Panel */
+        .equations-panel {
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+
+        .equation {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            border-left: 3px solid var(--border-default);
+        }
+
+        .equation:last-child {
+            margin-bottom: 0;
+        }
+
+        .equation-label {
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .equation.input { border-left-color: var(--flow-input); }
+        .equation.output { border-left-color: var(--flow-output-intermediate); }
+        .equation.direct { border-left-color: var(--flow-output-direct); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-default);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-dark);
+        }
+
+        /* Search Highlight */
+        .search-highlight {
+            background: var(--color-warning-bg);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    USEEIO Analysis
+                    <span class="badge-beta">Flow Beta</span>
+                </div>
+                <nav class="tabs">
+                    <a href="network_full.html" class="tab">Network</a>
+                    <a href="linkages.html" class="tab">Linkages</a>
+                    <a href="flow_analysis.html" class="tab active">Flow</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar-wrapper">
+                <aside class="sidebar" id="sidebar">
+                    <div class="sidebar-section">
+                    <div class="section-label">Flow Type</div>
+                    <div class="select-wrapper">
+                        <select id="flow-type-select" class="input" aria-label="Select flow type">
+                            <option value="dollars">💵 Dollar Flows</option>
+                            <optgroup label="Environmental">
+                                <option value="GHG">🌡️ Greenhouse Gases (CO2 eq)</option>
+                                <option value="ENRG">⚡ Energy Use</option>
+                                <option value="WATR">💧 Water Use</option>
+                                <option value="LAND">🌍 Land Use</option>
+                                <option value="SMOG">🌫️ Smog Formation</option>
+                                <option value="ACID">☁️ Acidification</option>
+                            </optgroup>
+                            <optgroup label="Economic & Social">
+                                <option value="VADD">💰 Value Added</option>
+                                <option value="JOBS">👥 Jobs Supported</option>
+                            </optgroup>
+                            <optgroup label="Waste">
+                                <option value="CMSW">🗑️ Municipal Solid Waste</option>
+                                <option value="CCDD">🏗️ Construction Debris</option>
+                                <option value="CRHW">☢️ Hazardous Waste</option>
+                            </optgroup>
+                            <optgroup label="Health">
+                                <option value="HRSP">😷 Respiratory Effects</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <!-- Normalization Toggle -->
+                    <div style="margin-top: 12px;">
+                        <div class="section-label" style="margin-bottom: 8px;">Normalization</div>
+                        <div class="toggle-group" id="normalization-toggle">
+                            <button class="toggle-btn active" data-mode="absolute" aria-pressed="true">
+                                Absolute
+                            </button>
+                            <button class="toggle-btn" data-mode="per-dollar" aria-pressed="false">
+                                Per $1B Output
+                            </button>
+                        </div>
+                        <div class="toggle-hint" id="normalization-hint">
+                            Total flows in selected unit
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-label">Target Sector Selection</div>
+                    <div class="select-wrapper">
+                        <select id="sector-select" class="input" aria-label="Select target sector">
+                            <option value="">Select a sector...</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-top: 12px;">
+                        <input type="text" id="sector-search" class="input" placeholder="Search industries..." aria-label="Search industries">
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-label">Target Sector Metrics</div>
+                    <div class="metrics-grid" id="metrics-panel">
+                        <!-- Row 1: Total Output / Direct Factor -->
+                        <div class="metric-card full-width">
+                            <div class="metric-label" id="metric-output-label">Total Output</div>
+                            <div class="metric-value" id="metric-output">—</div>
+                            <div class="metric-detail" id="metric-output-unit">Billion USD</div>
+                        </div>
+                        
+                        <!-- Row 2: Input side accounting -->
+                        <div class="metric-card">
+                            <div class="metric-label" id="metric-inputs-label">Intermediate Inputs</div>
+                            <div class="metric-value info" id="metric-inputs">—</div>
+                            <div class="metric-detail">from suppliers</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label" id="metric-va-label">Value Added</div>
+                            <div class="metric-value positive" id="metric-va">—</div>
+                            <div class="metric-detail">generated here</div>
+                        </div>
+                        
+                        <!-- Row 3: Output side accounting -->
+                        <div class="metric-card">
+                            <div class="metric-label">To Intermediates</div>
+                            <div class="metric-value warning" id="metric-intermediate">—</div>
+                            <div class="metric-detail">other sectors</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">To Final Demand</div>
+                            <div class="metric-value positive" id="metric-final">—</div>
+                            <div class="metric-detail">consumers/exports</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Balance verification -->
+                    <div class="equations-panel" style="margin-top: 12px; padding: 10px 12px;">
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">IO Balance Check</div>
+                        <div id="balance-check" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-subtle);">
+                            Inputs + VA = Output = Sales + FD
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-label">Methodology (Hertwich et al. 2024)</div>
+                    <div class="equations-panel">
+                        <div class="equation input">
+                            <div class="equation-label">Inputs from sector i</div>
+                            z<sub>it</sub> = A<sub>it</sub> × x<sub>t</sub>
+                        </div>
+                        <div class="equation direct">
+                            <div class="equation-label">Direct Final Demand</div>
+                            y<sub>t</sub> = final demand for target
+                        </div>
+                        <div class="equation output">
+                            <div class="equation-label">Intermediate Output to j</div>
+                            z<sub>tj</sub> = A<sub>tj</sub> × x<sub>j</sub>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-label">Top Input Flows</div>
+                    <div class="flow-list" id="input-flows">
+                        <div class="empty-state" style="padding: 20px;">
+                            <div style="font-size: 0.8rem; color: var(--text-subtle);">Select a target sector</div>
+                        </div>
+                    </div>
+                </div>
+                </aside>
+                <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+                    <span class="toggle-icon">◀</span>
+                </button>
+            </div>
+
+            <!-- Visualization -->
+            <div class="viz-container">
+                <div class="viz-header">
+                    <div class="viz-title" id="viz-title">Sector Flow Analysis</div>
+                    <div class="viz-controls">
+                        <button class="btn" id="btn-show-all" aria-label="Show all flows">
+                            Show All
+                        </button>
+                        <button class="btn active" id="btn-top-flows" aria-label="Show top flows only">
+                            Top 10 Flows
+                        </button>
+                        <button class="btn" id="btn-reset-expand" aria-label="Reset expansion" title="Collapse all expanded items" style="display: none;">
+                            ↺ Reset
+                        </button>
+                        <button class="btn" id="btn-export" aria-label="Export data">
+                            Export
+                        </button>
+                    </div>
+                </div>
+
+                <div class="viz-canvas" id="viz-canvas">
+                    <svg id="sankey-chart"></svg>
+                    <div class="empty-state" id="empty-state">
+                        <div class="empty-state-icon">⟳</div>
+                        <div class="empty-state-title">Select a Target Sector</div>
+                        <div class="empty-state-text">
+                            Choose an industry from the dropdown to visualize its input-output flow structure based on the Hypothetical Extraction Method.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--flow-input);"></div>
+                        <span>Intermediate Inputs</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #16a34a;"></div>
+                        <span>Value Added / Direct Factor</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--flow-output-direct);"></div>
+                        <span>Final Demand</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--flow-output-intermediate);"></div>
+                        <span>Intermediate Sales</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // Data & State Management
+        // ==========================================
+        
+        let industries = [];
+        let flowTypes = {};
+        let indicatorMetadata = {};
+        let sectorAccounts = {};  // Proper IO accounting per sector
+        let selectedSector = null;
+        let currentFlowType = 'dollars';
+        let showTopFlowsOnly = true;
+        let normalizationMode = 'absolute'; // 'absolute' or 'per-dollar'
+        let sidebarCollapsed = false;
+        const TOP_FLOWS_COUNT = 10;
+        const EXPANSION_INCREMENT = 5; // How many items to show when expanding
+        
+        // Track expanded state for "Other" nodes - now as expansion levels
+        // Each level adds a new column of nodes
+        let inputExpansionLevels = [];  // Array of { startIdx, count } for each expansion level
+        let outputExpansionLevels = []; // Array of { startIdx, count } for each expansion level
+
+        // Default colors (overridden by indicator)
+        let colors = {
+            input: '#2563eb',
+            outputDirect: '#16a34a',
+            outputIntermediate: '#ea580c',
+            target: '#1a1a1a'
+        };
+
+        // Sector colors (matching NAICS categories from USEEIO)
+        const sectorColors = {
+            // Agriculture
+            'Agriculture, Forestry, Fishing': '#2ecc71',
+            'Agriculture, Forestry, Fishing and Hunting': '#2ecc71',
+            // Mining
+            'Mining': '#8b4513',
+            'Mining, Quarrying, and Oil and Gas Extraction': '#8b4513',
+            // Utilities
+            'Utilities': '#f1c40f',
+            // Construction
+            'Construction': '#e67e22',
+            // Manufacturing
+            'Manufacturing': '#3498db',
+            // Trade
+            'Wholesale Trade': '#9b59b6',
+            'Retail Trade': '#e91e63',
+            // Transportation
+            'Transportation': '#00bcd4',
+            'Transportation and Warehousing': '#00bcd4',
+            // Information
+            'Information': '#673ab7',
+            // Finance
+            'Finance & Insurance': '#4caf50',
+            'Finance and Insurance': '#4caf50',
+            // Real Estate
+            'Real Estate': '#795548',
+            'Real Estate and Rental and Leasing': '#795548',
+            // Professional Services
+            'Professional Services': '#ff9800',
+            'Professional, Scientific, and Technical Services': '#ff9800',
+            // Management
+            'Management': '#607d8b',
+            'Management of Companies and Enterprises': '#607d8b',
+            // Admin & Waste
+            'Admin & Waste Services': '#009688',
+            'Administrative and Support and Waste Management and Remediation Services': '#009688',
+            // Education
+            'Education': '#3f51b5',
+            'Educational Services': '#3f51b5',
+            // Healthcare
+            'Healthcare': '#f44336',
+            'Health Care and Social Assistance': '#f44336',
+            // Arts & Entertainment
+            'Arts & Entertainment': '#ff5722',
+            'Arts, Entertainment, and Recreation': '#ff5722',
+            // Accommodation & Food
+            'Accommodation & Food': '#ffc107',
+            'Accommodation and Food Services': '#ffc107',
+            // Other Services
+            'Other Services': '#9e9e9e',
+            'Other Services (except Public Administration)': '#9e9e9e',
+            // Government
+            'Government': '#1a237e',
+            // Other
+            'Other': '#888888',
+            'Other Activities': '#888888'
+        };
+
+        const getSectorColor = (sector) => {
+            // Direct match
+            if (sectorColors[sector]) return sectorColors[sector];
+            // Partial match
+            for (const [key, color] of Object.entries(sectorColors)) {
+                if (sector.includes(key) || key.includes(sector)) return color;
+            }
+            return '#888888';
+        };
+
+        // ==========================================
+        // Data Loading
+        // ==========================================
+        
+        async function loadData() {
+            try {
+                console.log('Loading data...');
+                const response = await fetch('factor_flows_data.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Data loaded successfully');
+                
+                industries = data.industries.map((ind, i) => ({
+                    id: i,
+                    name: ind.name,
+                    sector: ind.sector,
+                    output: ind.output,
+                    factors: ind.factors || {}
+                }));
+                
+                flowTypes = data.flow_types;
+                indicatorMetadata = data.indicator_metadata || {};
+                sectorAccounts = data.sector_accounts || {};
+                
+                console.log('Industries loaded:', industries.length);
+                console.log('Flow types:', Object.keys(flowTypes));
+                
+                populateSectorSelect();
+                updateIndicatorColor();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Failed to load data. Check console for details.');
+                // Fallback to original data
+                try {
+                    const fallbackResponse = await fetch('circularity_data.json');
+                    const fallbackData = await fallbackResponse.json();
+                    industries = fallbackData.industries.map((ind, i) => ({
+                        id: i,
+                        name: ind.name,
+                        sector: ind.sector,
+                        output: ind.output,
+                        factors: {}
+                    }));
+                    flowTypes = fallbackData.flow_types;
+                    populateSectorSelect();
+                } catch (e) {
+                    console.error('Fallback also failed:', e);
+                }
+            }
+        }
+
+        function updateIndicatorColor() {
+            const meta = indicatorMetadata[currentFlowType] || {};
+            const indicatorColor = meta.color || '#2563eb';
+            
+            // Update CSS variable
+            document.documentElement.style.setProperty('--indicator-color', indicatorColor);
+            
+            // Update flow colors based on indicator
+            colors.input = indicatorColor;
+            colors.outputIntermediate = indicatorColor;
+        }
+
+        function getCurrentFlowData() {
+            return flowTypes[currentFlowType]?.top_flows || [];
+        }
+
+        function getCurrentUnit() {
+            const meta = indicatorMetadata[currentFlowType];
+            if (meta) return meta.unit_display;
+            return flowTypes[currentFlowType]?.unit || 'Units';
+        }
+
+        function formatFlowValue(value, short = false) {
+            const unit = getCurrentUnit();
+            if (short) {
+                if (value >= 1000) return `${(value/1000).toFixed(1)}k`;
+                if (value >= 1) return value.toFixed(1);
+                return value.toFixed(3);
+            }
+            return `${value.toFixed(2)} ${unit}`;
+        }
+
+        // ==========================================
+        // UI Setup
+        // ==========================================
+        
+        function populateSectorSelect() {
+            const select = document.getElementById('sector-select');
+            
+            // Group industries by sector
+            const sectorGroups = {};
+            industries.forEach(ind => {
+                if (!sectorGroups[ind.sector]) {
+                    sectorGroups[ind.sector] = [];
+                }
+                sectorGroups[ind.sector].push(ind);
+            });
+            
+            // Sort sectors alphabetically
+            const sortedSectors = Object.keys(sectorGroups).sort();
+            
+            sortedSectors.forEach(sector => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = sector;
+                
+                // Sort industries within sector by output (descending)
+                sectorGroups[sector]
+                    .sort((a, b) => b.output - a.output)
+                    .forEach(ind => {
+                        const option = document.createElement('option');
+                        option.value = ind.id;
+                        option.textContent = `${ind.name} ($${ind.output.toFixed(1)}B)`;
+                        optgroup.appendChild(option);
+                    });
+                
+                select.appendChild(optgroup);
+            });
+        }
+
+        // ==========================================
+        // Flow Analysis (HEM Methodology)
+        // ==========================================
+        
+        function analyzeFlows(targetId) {
+            const target = industries[targetId];
+            if (!target) return null;
+
+            const currentFlows = getCurrentFlowData();
+            const isDollar = currentFlowType === 'dollars';
+            const isPerDollar = normalizationMode === 'per-dollar';
+            
+            // Normalization factor: divide by output in billions to get per-$1B values
+            const outputBillions = target.output || 1;
+            const normFactor = isPerDollar ? outputBillions : 1;
+            
+            // Get proper accounting for this sector
+            const accounts = sectorAccounts[currentFlowType]?.[targetId] || {};
+            
+            // Get all flows involving the target (for visualization)
+            const inputFlows = []; // flows TO target (from suppliers)
+            const outputFlows = []; // flows FROM target (to buyers)
+            
+            currentFlows.forEach(flow => {
+                if (flow.to === targetId && flow.from !== targetId) {
+                    inputFlows.push({
+                        id: flow.from,
+                        name: industries[flow.from]?.name || `Sector ${flow.from}`,
+                        sector: industries[flow.from]?.sector || 'Unknown',
+                        value: flow.value / normFactor
+                    });
+                }
+                if (flow.from === targetId && flow.to !== targetId) {
+                    outputFlows.push({
+                        id: flow.to,
+                        name: industries[flow.to]?.name || `Sector ${flow.to}`,
+                        sector: industries[flow.to]?.sector || 'Unknown',
+                        value: flow.value / normFactor
+                    });
+                }
+            });
+
+            // Sort by value descending
+            inputFlows.sort((a, b) => b.value - a.value);
+            outputFlows.sort((a, b) => b.value - a.value);
+
+            // Use proper accounting values (complete totals, not just visible flows)
+            let result;
+            
+            if (isDollar) {
+                // Dollar accounting:
+                // Intermediate Inputs + Value Added = Total Output = Intermediate Sales + Final Demand
+                result = {
+                    target,
+                    inputFlows,
+                    outputFlows,
+                    isPerDollar,
+                    // Proper accounting values (normalized)
+                    totalOutput: (accounts.total_output || target.output) / normFactor,
+                    totalInputs: (accounts.intermediate_inputs || 0) / normFactor,
+                    valueAdded: (accounts.value_added || 0) / normFactor,
+                    totalOutputSales: (accounts.intermediate_sales || 0) / normFactor,
+                    finalDemand: (accounts.final_demand || 0) / normFactor,
+                    // For compatibility
+                    directValue: (accounts.total_output || target.output) / normFactor,
+                    directFinalDemand: (accounts.final_demand || 0) / normFactor,
+                    intermediateDemand: (accounts.intermediate_sales || 0) / normFactor,
+                    unit: getCurrentUnit()
+                };
+            } else {
+                // Factor accounting (balanced using N matrix):
+                // Embodied in Inputs + Direct Factor = Total Factor Output
+                // Total Factor Output = Factor to Intermediates + Factor to Final Demand
+                result = {
+                    target,
+                    inputFlows,
+                    outputFlows,
+                    isPerDollar,
+                    // Proper accounting values (normalized)
+                    directFactor: (accounts.direct_factor || 0) / normFactor,
+                    embodiedInInputs: (accounts.embodied_in_inputs || 0) / normFactor,
+                    totalFactorOutput: (accounts.total_factor_output || 0) / normFactor,
+                    totalMultiplier: accounts.total_multiplier || 0,  // Already per-dollar
+                    factorToIntermediates: (accounts.factor_to_intermediates || 0) / normFactor,
+                    factorToFinalDemand: (accounts.factor_to_final_demand || 0) / normFactor,
+                    totalFactorOut: (accounts.total_factor_out || 0) / normFactor,
+                    // For Sankey compatibility (matching dollar structure)
+                    totalInputs: (accounts.embodied_in_inputs || 0) / normFactor,
+                    valueAdded: (accounts.direct_factor || 0) / normFactor,
+                    totalOutputSales: (accounts.factor_to_intermediates || 0) / normFactor,
+                    finalDemand: (accounts.factor_to_final_demand || 0) / normFactor,
+                    // Legacy
+                    directValue: (accounts.direct_factor || 0) / normFactor,
+                    unit: getCurrentUnit()
+                };
+            }
+            
+            return result;
+        }
+
+        // ==========================================
+        // Sankey Diagram
+        // ==========================================
+        
+        function renderSankey(analysis) {
+            const container = document.getElementById('viz-canvas');
+            const svg = d3.select('#sankey-chart');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (!analysis) {
+                emptyState.style.display = 'flex';
+                svg.selectAll('*').remove();
+                return;
+            }
+            
+            console.log('Rendering Sankey for:', analysis.target?.name);
+            console.log('Input flows:', analysis.inputFlows?.length);
+            console.log('Output flows:', analysis.outputFlows?.length);
+            
+            emptyState.style.display = 'none';
+            
+            let width = container.clientWidth;
+            let height = container.clientHeight - 60; // Account for legend
+            
+            // Ensure minimum dimensions
+            if (width < 400) width = 800;
+            if (height < 300) height = 500;
+            
+            const margin = { top: 40, right: 200, bottom: 20, left: 200 };
+            
+            console.log('Container size:', width, 'x', height);
+            
+            // Check for valid dimensions
+            if (width - margin.left - margin.right <= 0 || height - margin.top - margin.bottom <= 0) {
+                console.error('Invalid dimensions - container too small');
+                return;
+            }
+            
+            svg.attr('width', width).attr('height', height);
+            svg.selectAll('*').remove();
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+            
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            // Prepare Sankey data
+            const nodes = [];
+            const links = [];
+            const nodeMap = new Map();
+            const isDollar = currentFlowType === 'dollars';
+            
+            let nodeIndex = 0;
+            
+            // Calculate target column based on input expansion levels
+            const targetColumn = 1 + inputExpansionLevels.length;
+            
+            // Add target node (center)
+            const targetNodeId = `target_${analysis.target.id}`;
+            nodeMap.set(targetNodeId, nodeIndex);
+            nodes.push({
+                id: targetNodeId,
+                name: analysis.target.name,
+                sector: analysis.target.sector,
+                isTarget: true,
+                column: targetColumn
+            });
+            nodeIndex++;
+
+            // Get proper accounting values
+            const totalInputs = isDollar ? (analysis.totalInputs || 0) : (analysis.embodiedInInputs || 0);
+            const valueAdded = isDollar ? (analysis.valueAdded || 0) : (analysis.directFactor || 0);
+            const totalSales = isDollar ? (analysis.totalOutputSales || 0) : (analysis.factorToIntermediates || 0);
+            const finalDemand = isDollar ? (analysis.finalDemand || 0) : (analysis.factorToFinalDemand || 0);
+
+            // Calculate how many columns we need based on expansion levels
+            const inputLevels = inputExpansionLevels.length;
+            const outputLevels = outputExpansionLevels.length;
+            const totalColumns = 3 + inputLevels + outputLevels; // base 3 + expansion columns
+            
+            // Column positions: 
+            // 0 = main inputs, 0.x = expansion levels, 1 = target, 1.x = output expansion, 2 = main outputs
+            
+            // Base flows (Top 10 or all if not showTopFlowsOnly)
+            const baseInputFlows = showTopFlowsOnly 
+                ? analysis.inputFlows.slice(0, TOP_FLOWS_COUNT) 
+                : analysis.inputFlows;
+            const baseOutputFlows = showTopFlowsOnly 
+                ? analysis.outputFlows.slice(0, TOP_FLOWS_COUNT) 
+                : analysis.outputFlows;
+            
+            // Add base input nodes (leftmost column)
+            baseInputFlows.forEach(flow => {
+                const nodeId = `input_${flow.id}`;
+                if (!nodeMap.has(nodeId)) {
+                    nodeMap.set(nodeId, nodeIndex);
+                    nodes.push({
+                        id: nodeId,
+                        name: flow.name,
+                        sector: flow.sector,
+                        isInput: true,
+                        column: 0
+                    });
+                    nodeIndex++;
+                }
+                links.push({
+                    source: nodeMap.get(nodeId),
+                    target: nodeMap.get(targetNodeId),
+                    value: flow.value,
+                    type: 'input'
+                });
+            });
+            
+            // Calculate visible input total so far
+            let visibleInputTotal = baseInputFlows.reduce((s, f) => s + f.value, 0);
+            let currentInputIdx = TOP_FLOWS_COUNT;
+            
+            // Add expanded input levels (horizontal expansion to the right)
+            inputExpansionLevels.forEach((level, levelIdx) => {
+                const expansionFlows = analysis.inputFlows.slice(currentInputIdx, currentInputIdx + EXPANSION_INCREMENT);
+                const columnPos = levelIdx + 1; // Column 1, 2, 3... for expansions (before target)
+                
+                expansionFlows.forEach(flow => {
+                    const nodeId = `input_exp_${levelIdx}_${flow.id}`;
+                    if (!nodeMap.has(nodeId)) {
+                        nodeMap.set(nodeId, nodeIndex);
+                        nodes.push({
+                            id: nodeId,
+                            name: flow.name,
+                            sector: flow.sector,
+                            isInput: true,
+                            isExpanded: true,
+                            expansionLevel: levelIdx,
+                            column: columnPos
+                        });
+                        nodeIndex++;
+                    }
+                    links.push({
+                        source: nodeMap.get(nodeId),
+                        target: nodeMap.get(targetNodeId),
+                        value: flow.value,
+                        type: 'input'
+                    });
+                    visibleInputTotal += flow.value;
+                });
+                
+                currentInputIdx += EXPANSION_INCREMENT;
+            });
+            
+            // Calculate remaining hidden inputs
+            const hiddenInputCount = Math.max(0, analysis.inputFlows.length - currentInputIdx);
+            const otherInputs = totalInputs - visibleInputTotal;
+            
+            // Add "Other Inputs" node if there are still hidden flows
+            if (otherInputs > 0.01 && showTopFlowsOnly) {
+                const otherInputId = 'other_inputs';
+                // Put "Other inputs" in the same column as base inputs (column 0) when no expansion,
+                // or at the current expansion level when expanded
+                const otherColumn = inputExpansionLevels.length > 0 ? inputExpansionLevels.length : 0;
+                nodeMap.set(otherInputId, nodeIndex);
+                nodes.push({
+                    id: otherInputId,
+                    name: hiddenInputCount > 0 ? `+${hiddenInputCount} more` : 'Other',
+                    isOther: true,
+                    isExpandable: hiddenInputCount > 0,
+                    expandType: 'input',
+                    hiddenCount: hiddenInputCount,
+                    column: otherColumn
+                });
+                nodeIndex++;
+                links.push({
+                    source: nodeMap.get(otherInputId),
+                    target: nodeMap.get(targetNodeId),
+                    value: otherInputs,
+                    type: 'input'
+                });
+            }
+            
+            // Add Value Added / Direct Factor node (left - this is what the sector "adds")
+            const vaLabel = isDollar ? 'Value Added' : 'Direct Factor';
+            if (valueAdded > 0.01) {
+                const vaId = 'value_added';
+                nodeMap.set(vaId, nodeIndex);
+                nodes.push({
+                    id: vaId,
+                    name: vaLabel,
+                    isValueAdded: true,
+                    column: targetColumn - 1  // Just before target
+                });
+                nodeIndex++;
+                links.push({
+                    source: nodeMap.get(vaId),
+                    target: nodeMap.get(targetNodeId),
+                    value: valueAdded,
+                    type: 'value_added'
+                });
+            }
+
+            // Add Final Demand node (right - at the rightmost column)
+            const finalDemandColumn = 2 + inputExpansionLevels.length + outputExpansionLevels.length;
+            if (finalDemand > 0.01) {
+                const finalDemandId = 'final_demand';
+                nodeMap.set(finalDemandId, nodeIndex);
+                nodes.push({
+                    id: finalDemandId,
+                    name: 'Final Demand',
+                    isFinalDemand: true,
+                    column: finalDemandColumn
+                });
+                nodeIndex++;
+                
+                links.push({
+                    source: nodeMap.get(targetNodeId),
+                    target: nodeMap.get(finalDemandId),
+                    value: finalDemand,
+                    type: 'direct'
+                });
+            }
+
+            // Base output flows (rightmost column)
+            const outputColumnBase = 2 + inputExpansionLevels.length + outputExpansionLevels.length;
+            baseOutputFlows.forEach(flow => {
+                const nodeId = `output_${flow.id}`;
+                if (!nodeMap.has(nodeId)) {
+                    nodeMap.set(nodeId, nodeIndex);
+                    nodes.push({
+                        id: nodeId,
+                        name: flow.name,
+                        sector: flow.sector,
+                        isOutput: true,
+                        column: outputColumnBase
+                    });
+                    nodeIndex++;
+                }
+                links.push({
+                    source: nodeMap.get(targetNodeId),
+                    target: nodeMap.get(nodeId),
+                    value: flow.value,
+                    type: 'intermediate'
+                });
+            });
+            
+            // Calculate visible output total
+            let visibleOutputTotal = baseOutputFlows.reduce((s, f) => s + f.value, 0);
+            let currentOutputIdx = TOP_FLOWS_COUNT;
+            
+            // Add expanded output levels (horizontal expansion to the left, closer to target)
+            outputExpansionLevels.forEach((level, levelIdx) => {
+                const expansionFlows = analysis.outputFlows.slice(currentOutputIdx, currentOutputIdx + EXPANSION_INCREMENT);
+                const columnPos = 2 + inputExpansionLevels.length + (outputExpansionLevels.length - 1 - levelIdx);
+                
+                expansionFlows.forEach(flow => {
+                    const nodeId = `output_exp_${levelIdx}_${flow.id}`;
+                    if (!nodeMap.has(nodeId)) {
+                        nodeMap.set(nodeId, nodeIndex);
+                        nodes.push({
+                            id: nodeId,
+                            name: flow.name,
+                            sector: flow.sector,
+                            isOutput: true,
+                            isExpanded: true,
+                            expansionLevel: levelIdx,
+                            column: columnPos
+                        });
+                        nodeIndex++;
+                    }
+                    links.push({
+                        source: nodeMap.get(targetNodeId),
+                        target: nodeMap.get(nodeId),
+                        value: flow.value,
+                        type: 'intermediate'
+                    });
+                    visibleOutputTotal += flow.value;
+                });
+                
+                currentOutputIdx += EXPANSION_INCREMENT;
+            });
+            
+            // Calculate remaining hidden outputs
+            const hiddenOutputCount = Math.max(0, analysis.outputFlows.length - currentOutputIdx);
+            const otherSales = totalSales - visibleOutputTotal;
+            
+            // Add "Other Sales" node if there are still hidden flows
+            if (otherSales > 0.01 && showTopFlowsOnly) {
+                const otherSalesId = 'other_sales';
+                // Put "Other sales" at the first output expansion column (right after target)
+                // This is targetColumn + 1, and stays there while base outputs shift right
+                const otherColumn = targetColumn + 1;
+                nodeMap.set(otherSalesId, nodeIndex);
+                nodes.push({
+                    id: otherSalesId,
+                    name: hiddenOutputCount > 0 ? `+${hiddenOutputCount} more` : 'Other',
+                    isOther: true,
+                    isExpandable: hiddenOutputCount > 0,
+                    expandType: 'output',
+                    hiddenCount: hiddenOutputCount,
+                    column: otherColumn
+                });
+                nodeIndex++;
+                links.push({
+                    source: nodeMap.get(targetNodeId),
+                    target: nodeMap.get(otherSalesId),
+                    value: otherSales,
+                    type: 'intermediate'
+                });
+            }
+
+            console.log('Creating Sankey with', nodes.length, 'nodes and', links.length, 'links');
+            
+            // Filter out invalid links (negative or zero values)
+            const validLinks = links.filter(l => l.value > 0.001);
+            console.log('Valid links after filtering:', validLinks.length);
+            
+            // Check if we have any data to display
+            if (validLinks.length === 0) {
+                console.warn('No valid links to display');
+                g.append('text')
+                    .attr('x', innerWidth / 2)
+                    .attr('y', innerHeight / 2)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'var(--text-muted)')
+                    .text('No flow data available for this sector');
+                return;
+            }
+            
+            // Find which nodes are actually used in valid links
+            const usedNodeIndices = new Set();
+            validLinks.forEach(l => {
+                usedNodeIndices.add(l.source);
+                usedNodeIndices.add(l.target);
+            });
+            
+            // Create a mapping from old indices to new indices
+            const oldToNewIndex = new Map();
+            const filteredNodes = [];
+            nodes.forEach((node, oldIndex) => {
+                if (usedNodeIndices.has(oldIndex)) {
+                    oldToNewIndex.set(oldIndex, filteredNodes.length);
+                    filteredNodes.push({ ...node });
+                }
+            });
+            
+            // Update link source/target to use new indices
+            const remappedLinks = validLinks.map(l => ({
+                ...l,
+                source: oldToNewIndex.get(l.source),
+                target: oldToNewIndex.get(l.target)
+            }));
+            
+            console.log('Filtered nodes:', filteredNodes.length, 'Remapped links:', remappedLinks.length);
+            
+            // Create Sankey generator with default left alignment
+            const sankey = d3.sankey()
+                .nodeWidth(16)
+                .nodePadding(10)
+                .extent([[0, 0], [innerWidth, innerHeight]])
+                .nodeAlign(d3.sankeyLeft);
+            
+            let sankeyNodes, sankeyLinks;
+            try {
+                const result = sankey({
+                    nodes: filteredNodes.map(n => ({...n})),
+                    links: remappedLinks.map(l => ({...l}))
+                });
+                sankeyNodes = result.nodes;
+                sankeyLinks = result.links;
+                console.log('Sankey generated successfully:', sankeyNodes.length, 'nodes,', sankeyLinks.length, 'links');
+            } catch (e) {
+                console.error('Sankey generation error:', e);
+                // Log nodes without circular refs
+                console.error('Nodes count:', filteredNodes.length);
+                console.error('Links count:', remappedLinks.length);
+                filteredNodes.forEach((n, i) => console.log(`Node ${i}:`, n.name, 'col:', n.column));
+                remappedLinks.forEach((l, i) => console.log(`Link ${i}: ${l.source} -> ${l.target}, value:`, l.value));
+                return;
+            }
+
+            // Draw column labels (only main columns)
+            const isDollarFlow = currentFlowType === 'dollars';
+            const isPerDollar = normalizationMode === 'per-dollar';
+            const intensitySuffix = isPerDollar ? ' (per $1B)' : '';
+            const leftLabel = (isDollarFlow ? 'Inputs' : 'Embodied') + intensitySuffix;
+            const rightLabel = (isDollarFlow ? 'Sales + Final Demand' : 'To Buyers + FD') + intensitySuffix;
+            const columnLabels = [leftLabel, 'Target', rightLabel];
+            const columnX = [0, innerWidth / 2, innerWidth];
+            
+            g.selectAll('.column-label')
+                .data(columnLabels)
+                .join('text')
+                .attr('class', 'column-label')
+                .attr('x', (d, i) => columnX[i])
+                .attr('y', -20)
+                .attr('text-anchor', (d, i) => i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'))
+                .text(d => d);
+
+            // Get current indicator color
+            const indicatorColor = indicatorMetadata[currentFlowType]?.color || '#2563eb';
+
+            // Draw links
+            const linkGroup = g.append('g')
+                .attr('class', 'sankey-links')
+                .attr('fill', 'none');
+
+            const link = linkGroup.selectAll('.sankey-link')
+                .data(sankeyLinks)
+                .join('path')
+                .attr('class', 'sankey-link')
+                .attr('d', d3.sankeyLinkHorizontal())
+                .attr('stroke', d => {
+                    if (d.type === 'input') return indicatorColor;
+                    if (d.type === 'value_added') return '#16a34a';  // Green for value added
+                    if (d.type === 'direct') return colors.outputDirect;
+                    return indicatorColor;
+                })
+                .attr('stroke-width', d => Math.max(2, d.width))
+                .on('mouseenter', handleLinkHover)
+                .on('mouseleave', handleLinkLeave);
+
+            // Draw nodes
+            const nodeGroup = g.append('g')
+                .attr('class', 'sankey-nodes');
+
+            const node = nodeGroup.selectAll('.sankey-node')
+                .data(sankeyNodes)
+                .join('g')
+                .attr('class', d => {
+                    let classes = 'sankey-node';
+                    if (d.isTarget) classes += ' target';
+                    if (d.isExpandable) classes += ' expandable';
+                    return classes;
+                })
+                .attr('transform', d => `translate(${d.x0}, ${d.y0})`)
+                .on('mouseenter', handleNodeHover)
+                .on('mouseleave', handleNodeLeave)
+                .on('click', (event, d) => {
+                    if (d.isExpandable) {
+                        event.stopPropagation();
+                        handleNodeExpand(d);
+                    }
+                });
+
+            node.append('rect')
+                .attr('width', d => d.x1 - d.x0)
+                .attr('height', d => Math.max(1, d.y1 - d.y0))
+                .attr('fill', d => {
+                    if (d.isTarget) return colors.target;
+                    if (d.isFinalDemand) return colors.outputDirect;
+                    if (d.isValueAdded) return '#16a34a';  // Green for value added
+                    if (d.isOther) return '#9ca3af';  // Gray for "other" nodes
+                    return getSectorColor(d.sector);
+                });
+
+            // Format value helper
+            const formatNodeValue = (value) => {
+                const isDollar = currentFlowType === 'dollars';
+                const isPerDollar = normalizationMode === 'per-dollar';
+                if (isDollar && !isPerDollar) return `$${value.toFixed(1)}B`;
+                if (isDollar && isPerDollar) return value.toFixed(2);
+                if (value >= 1000) return `${(value/1000).toFixed(1)}k`;
+                if (value >= 1) return value.toFixed(1);
+                if (value >= 0.01) return value.toFixed(2);
+                return value.toFixed(4);
+            };
+
+            // Helper to determine if node is on left side of target (use original isInput/isOutput flags)
+            const isLeftOfTarget = (d) => d.isInput || d.isValueAdded || d.isOther && d.expandType === 'input';
+            
+            // Node labels
+            node.append('text')
+                .attr('x', d => isLeftOfTarget(d) ? -8 : (d.x1 - d.x0) + 8)
+                .attr('y', d => (d.y1 - d.y0) / 2)
+                .attr('dy', '0.35em')
+                .attr('text-anchor', d => isLeftOfTarget(d) ? 'end' : 'start')
+                .text(d => truncateText(d.name, 30))
+                .append('tspan')
+                .attr('x', d => isLeftOfTarget(d) ? -8 : (d.x1 - d.x0) + 8)
+                .attr('dy', '1.2em')
+                .attr('fill', 'var(--text-subtle)')
+                .style('font-family', 'var(--font-mono)')
+                .style('font-size', '10px')
+                .text(d => {
+                    const value = d.value || d.sourceLinks?.reduce((s, l) => s + l.value, 0) || 0;
+                    return formatNodeValue(value);
+                });
+            
+            // Add expand hint for expandable nodes
+            node.filter(d => d.isExpandable)
+                .append('text')
+                .attr('class', 'expand-hint')
+                .attr('x', d => isLeftOfTarget(d) ? -8 : (d.x1 - d.x0) + 8)
+                .attr('y', d => (d.y1 - d.y0) / 2)
+                .attr('dy', '2.6em')
+                .attr('text-anchor', d => isLeftOfTarget(d) ? 'end' : 'start')
+                .text('► Click to expand');
+        }
+        
+        // Handle expanding "Other" nodes
+        function handleNodeExpand(nodeData) {
+            if (nodeData.expandType === 'input') {
+                inputExpansionLevels.push({ count: EXPANSION_INCREMENT });
+            } else if (nodeData.expandType === 'output') {
+                outputExpansionLevels.push({ count: EXPANSION_INCREMENT });
+            }
+            
+            // Show reset button if anything is expanded
+            if (inputExpansionLevels.length > 0 || outputExpansionLevels.length > 0) {
+                document.getElementById('btn-reset-expand').style.display = 'inline-flex';
+            }
+            
+            updateVisualization();
+        }
+
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength - 1) + '…';
+        }
+
+        // ==========================================
+        // Tooltip & Interactions
+        // ==========================================
+        
+        function handleNodeHover(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            const value = d.value || d.sourceLinks?.reduce((s, l) => s + l.value, 0) || 
+                         d.targetLinks?.reduce((s, l) => s + l.value, 0) || 0;
+            const unit = getCurrentUnit();
+            const isDollar = currentFlowType === 'dollars';
+            
+            const formatVal = (val) => {
+                if (isDollar) return `$${val.toFixed(2)}B`;
+                if (val >= 1000) return `${(val/1000).toFixed(2)}k ${unit}`;
+                if (val >= 1) return `${val.toFixed(2)} ${unit}`;
+                return `${val.toFixed(4)} ${unit}`;
+            };
+            
+            let flowType = 'Target Sector';
+            if (d.isInput) flowType = 'Input Supplier';
+            if (d.isOutput) flowType = 'Output Buyer';
+            if (d.isFinalDemand) flowType = 'Final Demand';
+            
+            const indicatorName = indicatorMetadata[currentFlowType]?.name || 'Dollar Flows';
+            
+            tooltip.innerHTML = `
+                <div class="tooltip-title">${d.name}</div>
+                ${d.sector ? `<div class="tooltip-row">
+                    <span class="tooltip-label">Sector</span>
+                    <span class="tooltip-value">${d.sector}</span>
+                </div>` : ''}
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Role</span>
+                    <span class="tooltip-value">${flowType}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">${indicatorName}</span>
+                    <span class="tooltip-value">${formatVal(value)}</span>
+                </div>
+            `;
+            
+            tooltip.style.left = (event.pageX + 15) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+            tooltip.classList.add('visible');
+
+            // Highlight connected links
+            d3.selectAll('.sankey-link')
+                .classed('dimmed', l => l.source !== d && l.target !== d)
+                .classed('highlighted', l => l.source === d || l.target === d);
+        }
+
+        function handleNodeLeave() {
+            document.getElementById('tooltip').classList.remove('visible');
+            d3.selectAll('.sankey-link')
+                .classed('dimmed', false)
+                .classed('highlighted', false);
+        }
+
+        function handleLinkHover(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            const source = d.source.name;
+            const target = d.target.name;
+            const unit = getCurrentUnit();
+            const isDollar = currentFlowType === 'dollars';
+            
+            const formatVal = (val) => {
+                if (isDollar) return `$${val.toFixed(2)}B`;
+                if (val >= 1000) return `${(val/1000).toFixed(2)}k ${unit}`;
+                if (val >= 1) return `${val.toFixed(2)} ${unit}`;
+                return `${val.toFixed(4)} ${unit}`;
+            };
+            
+            const indicatorName = indicatorMetadata[currentFlowType]?.name || 'Dollar Flows';
+            
+            tooltip.innerHTML = `
+                <div class="tooltip-title">${source} → ${target}</div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Flow Type</span>
+                    <span class="tooltip-value">${d.type === 'input' ? 'Input' : (d.type === 'direct' ? 'Direct' : 'Intermediate')}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">${indicatorName}</span>
+                    <span class="tooltip-value">${formatVal(d.value)}</span>
+                </div>
+            `;
+            
+            tooltip.style.left = (event.pageX + 15) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+            tooltip.classList.add('visible');
+
+            d3.select(event.target).classed('highlighted', true);
+        }
+
+        function handleLinkLeave(event) {
+            document.getElementById('tooltip').classList.remove('visible');
+            d3.select(event.target).classed('highlighted', false);
+        }
+
+        // ==========================================
+        // Update UI
+        // ==========================================
+        
+        function updateMetrics(analysis) {
+            const unit = getCurrentUnit();
+            const isDollar = currentFlowType === 'dollars';
+            const isPerDollar = normalizationMode === 'per-dollar';
+            const indicatorName = indicatorMetadata[currentFlowType]?.name || 'Dollar Flows';
+            
+            // Update labels based on flow type and normalization
+            const outputLabel = document.getElementById('metric-output-label');
+            const outputUnit = document.getElementById('metric-output-unit');
+            const inputsLabel = document.getElementById('metric-inputs-label');
+            const vaLabel = document.getElementById('metric-va-label');
+            
+            const perDollarSuffix = isPerDollar ? ' (per $1B)' : '';
+            
+            if (isDollar) {
+                outputLabel.textContent = isPerDollar ? 'Output Ratio' : 'Total Output';
+                outputUnit.textContent = isPerDollar ? 'Normalized' : 'Billion USD';
+                inputsLabel.textContent = 'Intermediate Inputs';
+                vaLabel.textContent = 'Value Added';
+            } else {
+                outputLabel.textContent = isPerDollar ? 'Factor Intensity' : 'Total Factor Pool';
+                outputUnit.textContent = isPerDollar ? `${unit} per $1B` : unit;
+                inputsLabel.textContent = 'Embodied in Inputs';
+                vaLabel.textContent = 'Direct Factor';
+            }
+            
+            if (!analysis) {
+                document.getElementById('metric-output').textContent = '—';
+                document.getElementById('metric-inputs').textContent = '—';
+                document.getElementById('metric-va').textContent = '—';
+                document.getElementById('metric-final').textContent = '—';
+                document.getElementById('metric-intermediate').textContent = '—';
+                document.getElementById('balance-check').innerHTML = 'Select a sector to view balance';
+                return;
+            }
+            
+            // Format values based on flow type and normalization
+            const formatVal = (val) => {
+                if (val === undefined || val === null) return '—';
+                if (isDollar && !isPerDollar) return `$${val.toFixed(1)}B`;
+                if (isDollar && isPerDollar) return val.toFixed(2);  // Ratio
+                // Factor flows
+                if (val >= 1000) return `${(val/1000).toFixed(2)}k`;
+                if (val >= 100) return val.toFixed(1);
+                if (val >= 1) return val.toFixed(2);
+                if (val >= 0.01) return val.toFixed(3);
+                return val.toFixed(4);
+            };
+            
+            if (isDollar) {
+                // Dollar accounting: Inputs + VA = Output = Sales + FD
+                document.getElementById('metric-output').textContent = formatVal(analysis.totalOutput);
+                document.getElementById('metric-inputs').textContent = formatVal(analysis.totalInputs);
+                document.getElementById('metric-va').textContent = formatVal(analysis.valueAdded);
+                document.getElementById('metric-intermediate').textContent = formatVal(analysis.totalOutputSales);
+                document.getElementById('metric-final').textContent = formatVal(analysis.finalDemand);
+                
+                // Balance check
+                const inputSide = (analysis.totalInputs || 0) + (analysis.valueAdded || 0);
+                const outputSide = (analysis.totalOutputSales || 0) + (analysis.finalDemand || 0);
+                const modeLabel = isPerDollar ? '(per $1B output)' : '';
+                document.getElementById('balance-check').innerHTML = `
+                    <div>Inputs (${formatVal(analysis.totalInputs)}) + VA (${formatVal(analysis.valueAdded)}) = ${formatVal(inputSide)}</div>
+                    <div>Sales (${formatVal(analysis.totalOutputSales)}) + FD (${formatVal(analysis.finalDemand)}) = ${formatVal(outputSide)}</div>
+                    <div style="color: var(--color-positive);">✓ Balanced ${modeLabel}</div>
+                `;
+            } else {
+                // Factor accounting: Embodied + Direct = Total Output = To Buyers + FD
+                const totalOutput = analysis.totalFactorOutput || (analysis.embodiedInInputs + analysis.directFactor);
+                document.getElementById('metric-output').textContent = formatVal(totalOutput);
+                document.getElementById('metric-inputs').textContent = formatVal(analysis.embodiedInInputs);
+                document.getElementById('metric-va').textContent = formatVal(analysis.directFactor);
+                document.getElementById('metric-intermediate').textContent = formatVal(analysis.factorToIntermediates);
+                document.getElementById('metric-final').textContent = formatVal(analysis.factorToFinalDemand);
+                
+                // Balance check
+                const inputSide = (analysis.embodiedInInputs || 0) + (analysis.directFactor || 0);
+                const outputSide = (analysis.factorToIntermediates || 0) + (analysis.factorToFinalDemand || 0);
+                const modeLabel = isPerDollar ? '(per $1B output)' : '';
+                document.getElementById('balance-check').innerHTML = `
+                    <div>Embodied (${formatVal(analysis.embodiedInInputs)}) + Direct (${formatVal(analysis.directFactor)}) = ${formatVal(inputSide)}</div>
+                    <div>To Buyers (${formatVal(analysis.factorToIntermediates)}) + FD (${formatVal(analysis.factorToFinalDemand)}) = ${formatVal(outputSide)}</div>
+                    <div style="color: var(--color-positive);">✓ Balanced ${modeLabel}</div>
+                `;
+            }
+        }
+
+        function updateFlowList(analysis) {
+            const container = document.getElementById('input-flows');
+            const unit = getCurrentUnit();
+            const isDollar = currentFlowType === 'dollars';
+            const indicatorColor = indicatorMetadata[currentFlowType]?.color || '#2563eb';
+            
+            if (!analysis || analysis.inputFlows.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <div style="font-size: 0.8rem; color: var(--text-subtle);">No input flows found for this indicator</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const formatVal = (val) => {
+                if (isDollar) return `$${val.toFixed(1)}B`;
+                if (val >= 1000) return `${(val/1000).toFixed(1)}k`;
+                if (val >= 1) return val.toFixed(1);
+                if (val >= 0.01) return val.toFixed(2);
+                return val.toFixed(4);
+            };
+            
+            // Get total inputs for percentage calculation
+            const totalInputs = isDollar ? (analysis.totalInputs || 0) : (analysis.embodiedInInputs || 0);
+            const topFlows = analysis.inputFlows.slice(0, 8);
+            const maxValue = totalInputs > 0 ? totalInputs : Math.max(...topFlows.map(f => f.value));
+            
+            let html = '';
+            
+            // Show value added / direct factor first
+            const vaLabel = isDollar ? 'Value Added' : 'Direct Factor';
+            const vaValue = isDollar ? analysis.valueAdded : analysis.directFactor;
+            if (vaValue > 0) {
+                html += `
+                    <div class="flow-item" style="border-left-color: #16a34a;" tabindex="0" role="button" aria-label="${vaLabel}: ${formatVal(vaValue)}">
+                        <div class="flow-item-name" title="${vaLabel}"><strong>${vaLabel}</strong></div>
+                        <div class="flow-item-value">${formatVal(vaValue)}</div>
+                        <div class="flow-item-bar">
+                            <div class="flow-item-bar-fill" style="width: 100%; background: #16a34a;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show input flows
+            html += '<div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin: 8px 0 4px; letter-spacing: 0.5px;">Intermediate Inputs</div>';
+            html += topFlows.map(flow => `
+                <div class="flow-item input-flow" data-id="${flow.id}" tabindex="0" role="button" aria-label="${flow.name}: ${formatVal(flow.value)} ${unit}">
+                    <div class="flow-item-name" title="${flow.name}">${flow.name}</div>
+                    <div class="flow-item-value">${formatVal(flow.value)}</div>
+                    <div class="flow-item-bar">
+                        <div class="flow-item-bar-fill" style="width: ${(flow.value / maxValue * 100).toFixed(1)}%; background: ${indicatorColor};"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function updateVisualization() {
+            const indicatorName = indicatorMetadata[currentFlowType]?.name || 'Dollar Flows';
+            
+            if (selectedSector === null) {
+                updateMetrics(null);
+                updateFlowList(null);
+                renderSankey(null);
+                document.getElementById('viz-title').textContent = `${indicatorName} Flow Analysis`;
+                return;
+            }
+            
+            console.log('Updating visualization for sector:', selectedSector);
+            const analysis = analyzeFlows(selectedSector);
+            console.log('Analysis result:', analysis ? 'OK' : 'NULL', analysis);
+            
+            if (analysis) {
+                const normLabel = normalizationMode === 'per-dollar' ? ' (per $1B output)' : '';
+                document.getElementById('viz-title').textContent = `${indicatorName}: ${analysis.target.name}${normLabel}`;
+                updateMetrics(analysis);
+                updateFlowList(analysis);
+                renderSankey(analysis);
+            } else {
+                console.error('Analysis returned null for sector', selectedSector);
+            }
+        }
+
+        // ==========================================
+        // Event Handlers
+        // ==========================================
+        
+        function updateLegendColors() {
+            const indicatorColor = indicatorMetadata[currentFlowType]?.color || '#2563eb';
+            const legendItems = document.querySelectorAll('.legend-item .legend-color');
+            if (legendItems[0]) legendItems[0].style.background = indicatorColor;
+            if (legendItems[2]) legendItems[2].style.background = indicatorColor;
+        }
+
+        function setupEventListeners() {
+            // Flow type select
+            document.getElementById('flow-type-select').addEventListener('change', (e) => {
+                currentFlowType = e.target.value;
+                inputExpansionLevels = [];  // Reset expansion when changing flow type
+                outputExpansionLevels = [];
+                document.getElementById('btn-reset-expand').style.display = 'none';
+                updateIndicatorColor();
+                updateVisualization();
+                updateLegendColors();
+            });
+
+            // Normalization toggle
+            document.querySelectorAll('#normalization-toggle .toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update active state
+                    document.querySelectorAll('#normalization-toggle .toggle-btn').forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-pressed', 'false');
+                    });
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-pressed', 'true');
+                    
+                    // Update mode
+                    normalizationMode = btn.dataset.mode;
+                    
+                    // Update hint text
+                    const hint = document.getElementById('normalization-hint');
+                    if (normalizationMode === 'absolute') {
+                        hint.textContent = 'Total flows in selected unit';
+                    } else {
+                        hint.textContent = 'Intensity: flows per $1B output';
+                    }
+                    
+                    updateVisualization();
+                });
+            });
+
+            // Sidebar toggle
+            document.getElementById('sidebar-toggle').addEventListener('click', () => {
+                sidebarCollapsed = !sidebarCollapsed;
+                const sidebar = document.getElementById('sidebar');
+                const toggleIcon = document.querySelector('.sidebar-toggle .toggle-icon');
+                const toggleBtn = document.getElementById('sidebar-toggle');
+                
+                if (sidebarCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    toggleIcon.style.transform = 'rotate(180deg)';
+                    toggleBtn.title = 'Show sidebar';
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    toggleIcon.style.transform = 'rotate(0deg)';
+                    toggleBtn.title = 'Hide sidebar';
+                }
+                
+                // Re-render Sankey after transition
+                setTimeout(() => {
+                    if (selectedSector !== null) {
+                        const analysis = analyzeFlows(selectedSector);
+                        if (analysis) renderSankey(analysis);
+                    }
+                }, 300);
+            });
+
+            // Sector select
+            document.getElementById('sector-select').addEventListener('change', (e) => {
+                selectedSector = e.target.value ? parseInt(e.target.value) : null;
+                inputExpansionLevels = [];  // Reset expansion when changing sector
+                outputExpansionLevels = [];
+                document.getElementById('btn-reset-expand').style.display = 'none';
+                updateVisualization();
+            });
+
+            // Search filter
+            document.getElementById('sector-search').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const select = document.getElementById('sector-select');
+                const options = select.querySelectorAll('option');
+                
+                options.forEach(option => {
+                    if (option.value === '') return;
+                    const text = option.textContent.toLowerCase();
+                    const matches = searchTerm === '' || text.includes(searchTerm);
+                    option.style.display = matches ? '' : 'none';
+                });
+            });
+
+            // View toggle buttons
+            document.getElementById('btn-show-all').addEventListener('click', () => {
+                showTopFlowsOnly = false;
+                inputExpansionLevels = [];  // Reset expansion
+                outputExpansionLevels = [];
+                document.getElementById('btn-show-all').classList.add('active');
+                document.getElementById('btn-top-flows').classList.remove('active');
+                document.getElementById('btn-reset-expand').style.display = 'none';
+                updateVisualization();
+            });
+
+            document.getElementById('btn-top-flows').addEventListener('click', () => {
+                showTopFlowsOnly = true;
+                inputExpansionLevels = [];  // Reset expansion
+                outputExpansionLevels = [];
+                document.getElementById('btn-top-flows').classList.add('active');
+                document.getElementById('btn-show-all').classList.remove('active');
+                document.getElementById('btn-reset-expand').style.display = 'none';
+                updateVisualization();
+            });
+
+            // Reset expansion button
+            document.getElementById('btn-reset-expand').addEventListener('click', () => {
+                inputExpansionLevels = [];
+                outputExpansionLevels = [];
+                document.getElementById('btn-reset-expand').style.display = 'none';
+                updateVisualization();
+            });
+
+            // Export button
+            document.getElementById('btn-export').addEventListener('click', () => {
+                if (selectedSector === null) return;
+                
+                const analysis = analyzeFlows(selectedSector);
+                if (!analysis) return;
+                
+                const exportData = {
+                    flowType: currentFlowType,
+                    unit: getCurrentUnit(),
+                    normalization: normalizationMode,
+                    normalizedUnit: normalizationMode === 'per-dollar' ? `${getCurrentUnit()} per $1B output` : getCurrentUnit(),
+                    target: {
+                        id: analysis.target.id,
+                        name: analysis.target.name,
+                        sector: analysis.target.sector,
+                        output: analysis.target.output,
+                        directValue: analysis.directValue
+                    },
+                    metrics: {
+                        totalInputs: analysis.totalInputs,
+                        valueAdded: analysis.valueAdded,
+                        totalOutputSales: analysis.totalOutputSales,
+                        finalDemand: analysis.finalDemand,
+                        // Factor-specific
+                        embodiedInInputs: analysis.embodiedInInputs,
+                        directFactor: analysis.directFactor,
+                        totalFactorOutput: analysis.totalFactorOutput,
+                        factorToIntermediates: analysis.factorToIntermediates,
+                        factorToFinalDemand: analysis.factorToFinalDemand
+                    },
+                    inputFlows: analysis.inputFlows,
+                    outputFlows: analysis.outputFlows
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `flow_analysis_${currentFlowType}_${analysis.target.name.replace(/[^a-z0-9]/gi, '_')}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            // Window resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    if (selectedSector !== null) {
+                        updateVisualization();
+                    }
+                }, 150);
+            });
+        }
+
+        // ==========================================
+        // Initialize
+        // ==========================================
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadData();
+            setupEventListeners();
+        });
+    </script>
+</body>
+</html>
